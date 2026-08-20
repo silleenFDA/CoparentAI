@@ -132,6 +132,8 @@ a { color: var(--accent); }
   letter-spacing: 0.01em;
 }
 .nav-btn .ico { font-size: 1.15rem; line-height: 1; }
+/* Un libellé sur deux lignes ne doit pas décaler les autres onglets. */
+.nav-btn { min-height: 50px; justify-content: flex-start; line-height: 1.15; }
 .nav-btn.active { color: var(--accent); background: var(--accent-soft); }
 
 .main {
@@ -176,6 +178,7 @@ a { color: var(--accent); }
     font-size: 0.9rem;
   }
   .nav-btn .ico { font-size: 1.05rem; }
+  .nav-btn { min-height: 0; align-items: center; }
   .main { padding: 26px 28px 60px; }
 }
 

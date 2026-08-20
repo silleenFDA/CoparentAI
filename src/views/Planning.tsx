@@ -20,6 +20,7 @@ import {
 } from '../lib/schedule'
 import { Dot, Empty } from '../components/ui'
 import EventForm from '../components/EventForm'
+import ImportTimetable from '../components/ImportTimetable'
 
 /** Onglet actif : l'identifiant d'un enfant, ou la vue « hors cours ». */
 type PlanningTab = string
@@ -34,6 +35,7 @@ export default function Planning() {
   )
   const [newEventDate, setNewEventDate] = useState<string | null>(null)
   const [editEvent, setEditEvent] = useState<OneOffEvent | null>(null)
+  const [importing, setImporting] = useState(false)
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(anchor, i)),
@@ -75,19 +77,26 @@ export default function Planning() {
     <>
       <div className="page-head">
         <div>
-          <h1>Planning</h1>
+          <h1>Emploi du temps</h1>
           <div className="sub">
             {weekCustodian
               ? `Semaine chez ${weekCustodian === 'me' ? meName : otherName}`
-              : 'Emplois du temps de la semaine'}
+              : 'La semaine des enfants'}
           </div>
         </div>
-        <button
-          className="btn btn-sm btn-primary"
-          onClick={() => setNewEventDate(today())}
-        >
-          + Événement
-        </button>
+        <div className="row">
+          {!isScopeTab && (
+            <button className="btn btn-sm" onClick={() => setImporting(true)}>
+              ⬆ Importer un .ics
+            </button>
+          )}
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => setNewEventDate(today())}
+          >
+            + Événement
+          </button>
+        </div>
       </div>
 
       <div className="segment" style={{ marginBottom: 14 }}>
@@ -221,8 +230,9 @@ export default function Planning() {
       {data.activities.length === 0 && data.events.length === 0 && (
         <div style={{ marginTop: 14 }}>
           <Empty>
-            Le planning est vide. Commencez par saisir les cours et les activités dans
-            l'onglet « Activités ».
+            Rien à afficher pour l'instant. Le plus rapide : importer l'emploi du temps
+            scolaire depuis Pronote ou École Directe avec le bouton « Importer un .ics ».
+            Les activités hors cours se saisissent dans l'onglet « Activités ».
           </Empty>
         </div>
       )}
@@ -234,6 +244,12 @@ export default function Planning() {
         </p>
       )}
 
+      {importing && (
+        <ImportTimetable
+          defaultChildId={isScopeTab ? undefined : tab}
+          onClose={() => setImporting(false)}
+        />
+      )}
       {newEventDate && (
         <EventForm defaultDate={newEventDate} onClose={() => setNewEventDate(null)} />
       )}

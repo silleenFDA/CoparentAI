@@ -7,7 +7,7 @@ import Settings from './views/Settings'
 
 const TABS = [
   { id: 'home', label: 'Accueil', icon: '🏠' },
-  { id: 'planning', label: 'Planning', icon: '🗓️' },
+  { id: 'planning', label: 'Emploi du temps', icon: '🗓️' },
   { id: 'activities', label: 'Activités', icon: '⚽' },
   { id: 'finances', label: 'Finances', icon: '💶' },
   { id: 'settings', label: 'Réglages', icon: '⚙️' },

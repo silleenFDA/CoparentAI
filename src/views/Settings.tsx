@@ -101,7 +101,7 @@ export default function Settings() {
 
         <p className="faint" style={{ marginTop: -4, marginBottom: 12 }}>
           Modifiez le prénom ou la couleur ; la couleur sert de repère dans tout
-          le planning.
+          l'emploi du temps.
         </p>
 
         {data.children.map((c) => (

@@ -11,12 +11,12 @@ dépenses entre les deux parents.
 | Onglet | À quoi ça sert |
 | --- | --- |
 | **Accueil** | Ce qui se passe aujourd'hui, les 7 prochains jours, et le solde entre parents en un coup d'œil. |
-| **Planning** | Trois onglets : l'emploi du temps de Maxime, celui de Mathis, et une vue des activités hors cours des deux enfants. |
+| **Emploi du temps** | Trois onglets : l'emploi du temps de Maxime, celui de Mathis, et une vue des activités hors cours des deux enfants. |
 | **Activités** | Les créneaux qui reviennent chaque semaine — cours d'un côté, activités hors cours de l'autre — et les rendez-vous ponctuels. |
 | **Finances** | Chaque dépense, qui l'a payée, comment elle se partage, et le calcul automatique de qui doit combien à qui. |
 | **Réglages** | Les prénoms, les couleurs, le rythme de garde, les catégories, et la sauvegarde de vos données. |
 
-## Le planning
+## L'emploi du temps
 
 Trois onglets, parce qu'on ne consulte pas un emploi du temps scolaire et un
 planning d'activités pour les mêmes raisons :
@@ -34,7 +34,8 @@ parent.
 ## Importer l'emploi du temps scolaire
 
 Pronote et École Directe proposent un export **iCal** (fichier `.ics`) de
-l'emploi du temps. Onglet **Activités → Cours → Importer un .ics**.
+l'emploi du temps. Onglet **Emploi du temps → Importer un .ics**, après avoir choisi l'enfant
+concerné.
 
 Ces exports ne décrivent pas la semaine type : ils listent toutes les séances
 datées du trimestre. L'application reconstitue donc la semaine en repérant les

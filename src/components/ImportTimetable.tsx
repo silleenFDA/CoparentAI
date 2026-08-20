@@ -6,11 +6,19 @@ import { newId } from '../lib/storage'
 import { buildTimetable, parseIcs, type ParsedTimetable } from '../lib/ics'
 import { Field, Modal } from './ui'
 
-export default function ImportTimetable({ onClose }: { onClose: () => void }) {
+export default function ImportTimetable({
+  defaultChildId,
+  onClose,
+}: {
+  defaultChildId?: string
+  onClose: () => void
+}) {
   const { data, update } = useStore()
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const [childId, setChildId] = useState(data.children[0]?.id ?? '')
+  const [childId, setChildId] = useState(
+    defaultChildId ?? data.children[0]?.id ?? '',
+  )
   const [parsed, setParsed] = useState<ParsedTimetable | null>(null)
   const [fileName, setFileName] = useState('')
   const [excluded, setExcluded] = useState<Set<string>>(new Set())

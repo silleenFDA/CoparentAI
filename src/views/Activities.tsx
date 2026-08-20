@@ -5,7 +5,6 @@ import { WEEKDAYS, formatLong, today } from '../lib/dates'
 import { ACTIVITY_KIND_ICON } from '../lib/schedule'
 import { Dot, Empty } from '../components/ui'
 import ActivityForm from '../components/ActivityForm'
-import ImportTimetable from '../components/ImportTimetable'
 import EventForm from '../components/EventForm'
 
 type Tab = ActivityScope | 'ponctuels'
@@ -17,7 +16,6 @@ export default function Activities() {
   const [newActivity, setNewActivity] = useState<ActivityScope | null>(null)
   const [editActivity, setEditActivity] = useState<Activity | null>(null)
   const [newEvent, setNewEvent] = useState(false)
-  const [importing, setImporting] = useState(false)
   const [editEvent, setEditEvent] = useState<OneOffEvent | null>(null)
 
   const counts = useMemo(
@@ -66,28 +64,22 @@ export default function Activities() {
         <div>
           <h1>Activités</h1>
           <div className="sub">
-            Saisissez ici les créneaux : ils remplissent le planning automatiquement.
+            Saisissez ici les créneaux : ils remplissent l'emploi du temps
+            automatiquement.
           </div>
         </div>
-        <div className="row">
-          {tab === 'cours' && (
-            <button className="btn btn-sm" onClick={() => setImporting(true)}>
-              ⬆ Importer un .ics
-            </button>
-          )}
-          <button
-            className="btn btn-sm btn-primary"
-            onClick={() =>
-              tab === 'ponctuels' ? setNewEvent(true) : setNewActivity(tab)
-            }
-          >
-            {tab === 'cours'
-              ? '+ Cours'
-              : tab === 'hors-cours'
-                ? '+ Activité'
-                : '+ Événement'}
-          </button>
-        </div>
+        <button
+          className="btn btn-sm btn-primary"
+          onClick={() =>
+            tab === 'ponctuels' ? setNewEvent(true) : setNewActivity(tab)
+          }
+        >
+          {tab === 'cours'
+            ? '+ Cours'
+            : tab === 'hors-cours'
+              ? '+ Activité'
+              : '+ Événement'}
+        </button>
       </div>
 
       <div className="segment" style={{ marginBottom: 14 }}>
@@ -123,7 +115,7 @@ export default function Activities() {
         (byDay.length === 0 ? (
           <Empty>
             {tab === 'cours'
-              ? "Aucun cours enregistré. Le plus rapide : exportez l'emploi du temps au format iCal depuis Pronote ou École Directe, puis utilisez « Importer un .ics »."
+              ? "Aucun cours enregistré. Le plus rapide : les importer depuis Pronote ou École Directe, avec le bouton « Importer un .ics » de l'onglet Emploi du temps."
               : 'Aucune activité enregistrée. Ajoutez les sports, cours de musique et trajets qui reviennent chaque semaine.'}
           </Empty>
         ) : (
@@ -242,7 +234,6 @@ export default function Activities() {
       {editActivity && (
         <ActivityForm initial={editActivity} onClose={() => setEditActivity(null)} />
       )}
-      {importing && <ImportTimetable onClose={() => setImporting(false)} />}
       {newEvent && <EventForm onClose={() => setNewEvent(false)} />}
       {editEvent && <EventForm initial={editEvent} onClose={() => setEditEvent(null)} />}
     </>
