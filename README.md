@@ -44,6 +44,10 @@ dessus :
   (basket, piano, orthophoniste) et les rendez-vous datés (médecin, compétition,
   conseil de classe). Un cours ne s'y trouve jamais.
 
+Un seul bouton **« + Ajouter »** couvre les deux natures : la première question
+du formulaire est « est-ce que ça revient ? ». On peut changer d'avis en cours
+de saisie, ce qui est déjà écrit est conservé.
+
 Les activités hors cours apparaissent donc aux deux endroits, mais pour deux
 usages différents : dans la semaine pour savoir *quand*, dans la liste pour
 revoir *ce qui revient* et le corriger en bloc.

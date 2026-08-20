@@ -275,6 +275,7 @@ export default function Planning() {
       {newCourse && (
         <ActivityForm
           defaultScope="cours"
+          lockScope
           defaultChildId={isScopeTab ? undefined : tab}
           onClose={() => setNewCourse(false)}
         />

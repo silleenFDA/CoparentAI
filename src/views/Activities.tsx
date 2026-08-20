@@ -14,10 +14,22 @@ export default function Activities() {
   const { data, childName, childColor, meName, otherName } = useStore()
   const [tab, setTab] = useState<Tab>('hebdo')
   const [childFilter, setChildFilter] = useState('all')
-  const [newActivity, setNewActivity] = useState<'hors-cours' | null>(null)
   const [editActivity, setEditActivity] = useState<Activity | null>(null)
-  const [newEvent, setNewEvent] = useState(false)
   const [editEvent, setEditEvent] = useState<OneOffEvent | null>(null)
+  /**
+   * Ajout en cours. Le brouillon suit la bascule entre « chaque semaine » et
+   * « une seule fois » pour que la saisie déjà faite ne soit pas perdue.
+   */
+  const [adding, setAdding] = useState<'hebdo' | 'ponctuel' | null>(null)
+  const [draft, setDraft] = useState<{ title: string; childId: string }>({
+    title: '',
+    childId: '',
+  })
+
+  function startAdding(type: 'hebdo' | 'ponctuel') {
+    setDraft({ title: '', childId: childFilter === 'all' ? '' : childFilter })
+    setAdding(type)
+  }
 
   const horsCours = useMemo(
     () => data.activities.filter((a) => a.scope === 'hors-cours'),
@@ -62,17 +74,15 @@ export default function Activities() {
         <div>
           <h1>Activités</h1>
           <div className="sub">
-            Tout ce qui ne relève pas de l'emploi du temps scolaire : sport, musique,
-            rendez-vous médicaux, compétitions…
+            Tout ce qui ne relève pas de l'emploi du temps scolaire, que ça revienne
+            chaque semaine (ping-pong, piano) ou pas (rendez-vous médical, compétition).
           </div>
         </div>
         <button
           className="btn btn-sm btn-primary"
-          onClick={() =>
-            tab === 'ponctuels' ? setNewEvent(true) : setNewActivity('hors-cours')
-          }
+          onClick={() => startAdding(tab === 'ponctuels' ? 'ponctuel' : 'hebdo')}
         >
-          {tab === 'hebdo' ? '+ Activité' : '+ Rendez-vous'}
+          + Ajouter
         </button>
       </div>
 
@@ -215,17 +225,33 @@ export default function Activities() {
         </>
       )}
 
-      {newActivity && (
+      {adding === 'hebdo' && (
         <ActivityForm
-          defaultScope={newActivity}
-          defaultChildId={childFilter === 'all' ? undefined : childFilter}
-          onClose={() => setNewActivity(null)}
+          defaultScope="hors-cours"
+          lockScope
+          defaultChildId={draft.childId || undefined}
+          defaultTitle={draft.title}
+          onSwitchToOneOff={(d) => {
+            setDraft(d)
+            setAdding('ponctuel')
+          }}
+          onClose={() => setAdding(null)}
+        />
+      )}
+      {adding === 'ponctuel' && (
+        <EventForm
+          defaultChildId={draft.childId || undefined}
+          defaultTitle={draft.title}
+          onSwitchToWeekly={(d) => {
+            setDraft(d)
+            setAdding('hebdo')
+          }}
+          onClose={() => setAdding(null)}
         />
       )}
       {editActivity && (
         <ActivityForm initial={editActivity} onClose={() => setEditActivity(null)} />
       )}
-      {newEvent && <EventForm onClose={() => setNewEvent(false)} />}
       {editEvent && <EventForm initial={editEvent} onClose={() => setEditEvent(null)} />}
     </>
   )

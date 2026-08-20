@@ -3,22 +3,31 @@ import { useStore } from '../store'
 import type { OneOffEvent } from '../types'
 import { today } from '../lib/dates'
 import { newId } from '../lib/storage'
-import { Field, Modal } from './ui'
+import { Field, Modal, Segment } from './ui'
 
 export default function EventForm({
   initial,
   defaultDate,
+  defaultTitle,
+  defaultChildId,
+  onSwitchToWeekly,
   onClose,
 }: {
   initial?: OneOffEvent
   defaultDate?: string
+  defaultTitle?: string
+  defaultChildId?: string
+  /** Bascule vers le formulaire hebdomadaire, en gardant la saisie en cours. */
+  onSwitchToWeekly?: (draft: { title: string; childId: string }) => void
   onClose: () => void
 }) {
   const { data, update } = useStore()
   const isEdit = Boolean(initial)
 
-  const [title, setTitle] = useState(initial?.title ?? '')
-  const [childId, setChildId] = useState<string>(initial?.childId ?? 'all')
+  const [title, setTitle] = useState(initial?.title ?? defaultTitle ?? '')
+  const [childId, setChildId] = useState<string>(
+    initial?.childId ?? defaultChildId ?? 'all',
+  )
   const [date, setDate] = useState(initial?.date ?? defaultDate ?? today())
   const [start, setStart] = useState(initial?.start ?? '')
   const [end, setEnd] = useState(initial?.end ?? '')
@@ -60,6 +69,24 @@ export default function EventForm({
       title={isEdit ? `Modifier l'événement` : 'Nouvel événement ponctuel'}
       onClose={onClose}
     >
+      {onSwitchToWeekly && (
+        <Field
+          label="Est-ce que ça revient ?"
+          hint="Le ping-pong du samedi revient ; une compétition ou un rendez-vous médical, non."
+        >
+          <Segment<'hebdo' | 'ponctuel'>
+            value="ponctuel"
+            onChange={(next) => {
+              if (next === 'hebdo') onSwitchToWeekly({ title, childId })
+            }}
+            options={[
+              { value: 'hebdo', label: 'Chaque semaine' },
+              { value: 'ponctuel', label: 'Une seule fois' },
+            ]}
+          />
+        </Field>
+      )}
+
       <Field label="Quoi ?">
         <input
           type="text"

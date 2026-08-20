@@ -10,11 +10,19 @@ export default function ActivityForm({
   initial,
   defaultScope,
   defaultChildId,
+  defaultTitle,
+  lockScope,
+  onSwitchToOneOff,
   onClose,
 }: {
   initial?: Activity
   defaultScope?: ActivityScope
   defaultChildId?: string
+  defaultTitle?: string
+  /** Masque le choix cours / hors cours quand le contexte l'impose déjà. */
+  lockScope?: boolean
+  /** Bascule vers le formulaire d'événement daté, en gardant la saisie en cours. */
+  onSwitchToOneOff?: (draft: { title: string; childId: string }) => void
   onClose: () => void
 }) {
   const { data, update, meName, otherName } = useStore()
@@ -23,7 +31,7 @@ export default function ActivityForm({
   const [childId, setChildId] = useState(
     initial?.childId ?? defaultChildId ?? data.children[0]?.id ?? '',
   )
-  const [title, setTitle] = useState(initial?.title ?? '')
+  const [title, setTitle] = useState(initial?.title ?? defaultTitle ?? '')
   const [scope, setScope] = useState<ActivityScope>(
     initial?.scope ?? defaultScope ?? 'hors-cours',
   )
@@ -90,22 +98,42 @@ export default function ActivityForm({
       }
       onClose={onClose}
     >
-      <Field
-        label="Type de créneau"
-        hint="Un cours reste dans l'onglet Emploi du temps ; tout le reste — sport, musique, trajets — se retrouve dans l'onglet Activités."
-      >
-        <Segment<ActivityScope>
-          value={scope}
-          onChange={(next) => {
-            setScope(next)
-            setKind(next === 'cours' ? 'ecole' : 'sport')
-          }}
-          options={[
-            { value: 'cours', label: 'Cours' },
-            { value: 'hors-cours', label: 'Hors cours' },
-          ]}
-        />
-      </Field>
+      {onSwitchToOneOff && (
+        <Field
+          label="Est-ce que ça revient ?"
+          hint="Le ping-pong du samedi revient ; une compétition ou un rendez-vous médical, non."
+        >
+          <Segment<'hebdo' | 'ponctuel'>
+            value="hebdo"
+            onChange={(next) => {
+              if (next === 'ponctuel') onSwitchToOneOff({ title, childId })
+            }}
+            options={[
+              { value: 'hebdo', label: 'Chaque semaine' },
+              { value: 'ponctuel', label: 'Une seule fois' },
+            ]}
+          />
+        </Field>
+      )}
+
+      {!lockScope && (
+        <Field
+          label="Type de créneau"
+          hint="Un cours reste dans l'onglet Emploi du temps ; tout le reste — sport, musique, trajets — se retrouve dans l'onglet Activités."
+        >
+          <Segment<ActivityScope>
+            value={scope}
+            onChange={(next) => {
+              setScope(next)
+              setKind(next === 'cours' ? 'ecole' : 'sport')
+            }}
+            options={[
+              { value: 'cours', label: 'Cours' },
+              { value: 'hors-cours', label: 'Hors cours' },
+            ]}
+          />
+        </Field>
+      )}
 
       <Field label={scope === 'cours' ? 'Matière ou intitulé' : "Nom de l'activité"}>
         <input
