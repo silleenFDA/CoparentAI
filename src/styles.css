@@ -514,7 +514,17 @@ textarea { min-height: 64px; resize: vertical; }
 .slot .t { font-weight: 700; font-variant-numeric: tabular-nums; }
 .slot .n { color: var(--text-soft); }
 .slot .l { color: var(--text-faint); font-size: 0.75rem; }
-.slot button { border: 0; background: transparent; padding: 0; text-align: left; width: 100%; color: inherit; }
+.slot button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.slot button:hover .n { text-decoration: underline; }
 
 /* Les cours forment la trame de fond de la journée : on les pose en aplat
    discret pour que les activités et rendez-vous ressortent par-dessus. */

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
-import type { OneOffEvent } from '../types'
+import type { Activity, OneOffEvent } from '../types'
 import {
   WEEKDAYS_SHORT,
   addDays,
@@ -21,6 +21,7 @@ import {
 import { Dot, Empty } from '../components/ui'
 import EventForm from '../components/EventForm'
 import ImportTimetable from '../components/ImportTimetable'
+import ActivityForm from '../components/ActivityForm'
 
 /** Onglet actif : l'identifiant d'un enfant, ou la vue « hors cours ». */
 type PlanningTab = string
@@ -36,6 +37,7 @@ export default function Planning() {
   const [newEventDate, setNewEventDate] = useState<string | null>(null)
   const [editEvent, setEditEvent] = useState<OneOffEvent | null>(null)
   const [importing, setImporting] = useState(false)
+  const [editActivity, setEditActivity] = useState<Activity | null>(null)
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(anchor, i)),
@@ -199,10 +201,14 @@ export default function Planning() {
                     style={{ borderLeftColor: childColor(it.childId) }}
                   >
                     <button
+                      title="Modifier ce créneau"
                       onClick={() => {
                         if (it.source === 'event') {
                           const ev = data.events.find((e) => e.id === it.id)
                           if (ev) setEditEvent(ev)
+                        } else {
+                          const act = data.activities.find((a) => a.id === it.id)
+                          if (act) setEditActivity(act)
                         }
                       }}
                     >
@@ -239,8 +245,9 @@ export default function Planning() {
 
       {data.custody.mode !== 'off' && (
         <p className="faint" style={{ marginTop: 14 }}>
-          Astuce : cliquez sur le nom d'un parent dans une journée pour inverser la garde
-          ce jour-là (vacances, échange ponctuel…). Un astérisque signale une exception.
+          Astuces : cliquez sur un créneau pour le modifier ou le supprimer. Cliquez sur
+          le nom d'un parent dans une journée pour inverser la garde ce jour-là
+          (vacances, échange ponctuel…) ; un astérisque signale une exception.
         </p>
       )}
 
@@ -255,6 +262,9 @@ export default function Planning() {
       )}
       {editEvent && (
         <EventForm initial={editEvent} onClose={() => setEditEvent(null)} />
+      )}
+      {editActivity && (
+        <ActivityForm initial={editActivity} onClose={() => setEditActivity(null)} />
       )}
     </>
   )
