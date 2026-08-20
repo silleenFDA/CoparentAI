@@ -128,20 +128,54 @@ export function saveData(data: AppData): void {
   }
 }
 
-/** Télécharge un fichier .json de sauvegarde. */
-export function exportData(data: AppData): void {
-  const stamp = new Date().toISOString().slice(0, 10)
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: 'application/json',
-  })
+export type ExportResult = 'ok' | 'refuse' | 'erreur'
+
+/** Enregistre le fichier via le navigateur, quand c'est possible. */
+function saveViaBrowser(filename: string, json: string): void {
+  const blob = new Blob([json], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `coparentai-sauvegarde-${stamp}.json`
+  a.download = filename
   document.body.appendChild(a)
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
+}
+
+/**
+ * Télécharge un fichier .json de sauvegarde.
+ *
+ * Publiée sur claude.ai, la page n'a pas le droit de déclencher elle-même un
+ * téléchargement : elle doit le proposer au lecteur, qui confirme. Ailleurs
+ * (serveur personnel, GitHub Pages), le lien de téléchargement classique
+ * fonctionne. On essaie donc la première voie, et on retombe sur la seconde.
+ */
+export async function exportData(data: AppData): Promise<ExportResult> {
+  const stamp = new Date().toISOString().slice(0, 10)
+  const filename = `coparentai-sauvegarde-${stamp}.json`
+  const json = JSON.stringify(data, null, 2)
+
+  try {
+    const downloads = await window.claude?.use('downloads')
+    if (downloads) {
+      await downloads.save({ filename, data: json })
+      return 'ok'
+    }
+  } catch (err) {
+    const code = (err as { code?: string })?.code
+    if (code === 'declined' || code === 'rate_limited') return 'refuse'
+    console.error('Enregistrement refusé par l’hébergeur', err)
+    return 'erreur'
+  }
+
+  try {
+    saveViaBrowser(filename, json)
+    return 'ok'
+  } catch (err) {
+    console.error('Téléchargement impossible', err)
+    return 'erreur'
+  }
 }
 
 export function parseImported(text: string): AppData {

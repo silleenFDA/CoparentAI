@@ -88,6 +88,12 @@ classique. Sur téléphone, ouvrez cette adresse puis :
 
 Elle apparaît alors comme une vraie application, avec son icône.
 
+## Fabriquer une version en un seul fichier
+
+`npm run build:single` produit `dist/coparentai.html` : toute l'application dans
+un fichier unique, sans rien à installer. Pratique pour l'ouvrir directement
+depuis le disque, ou la déposer sur un hébergement qui n'accepte qu'une page.
+
 ## Publier l'application (une seule fois)
 
 L'application se publie toute seule via GitHub Pages :

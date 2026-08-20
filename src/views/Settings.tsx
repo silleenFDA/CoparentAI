@@ -44,7 +44,7 @@ export default function Settings() {
         )
           return
         replace(imported)
-        flash('Sauvegarde restaurée.')
+        flash('✅ Sauvegarde restaurée.')
       } catch {
         alert("Ce fichier n'est pas une sauvegarde CoparentAI valide.")
       }
@@ -61,7 +61,7 @@ export default function Settings() {
         </div>
       </div>
 
-      {message && <div className="callout">✅ {message}</div>}
+      {message && <div className="callout">{message}</div>}
 
       <div className="card">
         <div className="card-title">
@@ -349,7 +349,15 @@ export default function Settings() {
           vers l'ordinateur.
         </p>
         <div className="row">
-          <button className="btn" onClick={() => exportData(data)}>
+          <button
+            className="btn"
+            onClick={async () => {
+              const result = await exportData(data)
+              if (result === 'ok') flash('✅ Sauvegarde enregistrée.')
+              else if (result === 'refuse') flash('Enregistrement annulé.')
+              else alert("La sauvegarde n'a pas pu être enregistrée.")
+            }}
+          >
             ⬇ Exporter une sauvegarde
           </button>
           <button className="btn" onClick={() => fileRef.current?.click()}>
@@ -384,7 +392,7 @@ export default function Settings() {
               )
                 return
               replace(demoData())
-              flash("Données d'exemple chargées.")
+              flash("✅ Données d'exemple chargées.")
             }}
           >
             Charger un exemple
@@ -399,7 +407,7 @@ export default function Settings() {
               )
                 return
               replace(emptyData())
-              flash('Données effacées.')
+              flash('✅ Données effacées.')
             }}
           >
             Tout effacer

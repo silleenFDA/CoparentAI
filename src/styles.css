@@ -24,25 +24,48 @@
   font-synthesis: none;
 }
 
+/* Thème sombre.
+   Trois états possibles chez le lecteur : un choix explicite marque la racine
+   avec data-theme, et le réglage « système » ne marque rien. On redéfinit donc
+   les jetons pour chacun de ces cas, et jamais la couleur d'un composant. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #12141c;
-    --surface: #1b1e28;
-    --surface-2: #232733;
-    --border: #2e3342;
-    --text: #eceef5;
-    --text-soft: #a4abbf;
-    --text-faint: #7b8299;
-    --accent: #8b87ff;
-    --accent-soft: #262a44;
-    --green: #4ade80;
-    --green-soft: #16301f;
-    --red: #fb7185;
-    --red-soft: #3a1a22;
-    --amber: #fbbf24;
-    --amber-soft: #382a12;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  :root:not([data-theme='light']) {
+  --bg: #12141c;
+  --surface: #1b1e28;
+  --surface-2: #232733;
+  --border: #2e3342;
+  --text: #eceef5;
+  --text-soft: #a4abbf;
+  --text-faint: #7b8299;
+  --accent: #8b87ff;
+  --accent-soft: #262a44;
+  --green: #4ade80;
+  --green-soft: #16301f;
+  --red: #fb7185;
+  --red-soft: #3a1a22;
+  --amber: #fbbf24;
+  --amber-soft: #382a12;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #12141c;
+  --surface: #1b1e28;
+  --surface-2: #232733;
+  --border: #2e3342;
+  --text: #eceef5;
+  --text-soft: #a4abbf;
+  --text-faint: #7b8299;
+  --accent: #8b87ff;
+  --accent-soft: #262a44;
+  --green: #4ade80;
+  --green-soft: #16301f;
+  --red: #fb7185;
+  --red-soft: #3a1a22;
+  --amber: #fbbf24;
+  --amber-soft: #382a12;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 * { box-sizing: border-box; }
