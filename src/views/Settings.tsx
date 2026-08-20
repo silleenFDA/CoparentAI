@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store'
 import type { ParentId } from '../types'
 import { addDays, formatFull, weekdayOf, WEEKDAYS } from '../lib/dates'
 import { custodyParent, otherParent } from '../lib/schedule'
 import { emptyData, exportData, parseImported } from '../lib/storage'
 import { demoData } from '../lib/demo'
+import { estimateStorage, formatBytes, pruneFiles, type StorageEstimate } from '../lib/files'
 import { today as todayFn } from '../lib/dates'
 import { Field, Segment } from '../components/ui'
 
@@ -13,6 +14,11 @@ export default function Settings() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [newCategory, setNewCategory] = useState('')
   const [message, setMessage] = useState<string | null>(null)
+
+  const [storage, setStorage] = useState<StorageEstimate | null>(null)
+  useEffect(() => {
+    estimateStorage().then(setStorage)
+  }, [data.documents.length])
 
   const currentCustodian = custodyParent(
     todayFn(),
@@ -27,17 +33,25 @@ export default function Settings() {
 
   function handleImport(file: File) {
     const reader = new FileReader()
-    reader.onload = () => {
-      try {
-        const imported = parseImported(String(reader.result))
-        if (
-          !confirm(
-            'Remplacer toutes les données actuelles par le contenu de ce fichier ?',
-          )
+    reader.onload = async () => {
+      if (
+        !confirm(
+          'Remplacer toutes les données actuelles par le contenu de ce fichier ?',
         )
-          return
+      )
+        return
+      try {
+        const imported = await parseImported(String(reader.result))
         replace(imported)
-        flash('✅ Sauvegarde restaurée.')
+        await pruneFiles(imported.documents.map((d) => d.id))
+        const manquants =
+          (JSON.parse(String(reader.result)).documents?.length ?? 0) -
+          imported.documents.length
+        flash(
+          manquants > 0
+            ? `✅ Sauvegarde restaurée. ${manquants} document(s) sans fichier joint ont été ignorés.`
+            : '✅ Sauvegarde restaurée.',
+        )
       } catch {
         alert("Ce fichier n'est pas une sauvegarde CoparentAI valide.")
       }
@@ -305,6 +319,16 @@ export default function Settings() {
           sauvegarde : c'est aussi comme cela que vous transférez vos données du téléphone
           vers l'ordinateur.
         </p>
+        {storage && (
+          <p className="faint">
+            Espace utilisé sur cet appareil : {formatBytes(storage.used)}
+            {storage.quota > 0 && ` sur environ ${formatBytes(storage.quota)}`}.{' '}
+            {storage.persistent
+              ? 'Le navigateur a accepté de conserver ces données en priorité.'
+              : "Le navigateur peut vider ce stockage s'il manque de place."}
+          </p>
+        )}
+
         <div className="row">
           <button
             className="btn"
@@ -356,7 +380,7 @@ export default function Settings() {
           </button>
           <button
             className="btn btn-danger"
-            onClick={() => {
+            onClick={async () => {
               if (
                 !confirm(
                   'Effacer TOUTES les données ? Cette action est définitive. Pensez à exporter une sauvegarde avant.',
@@ -364,6 +388,7 @@ export default function Settings() {
               )
                 return
               replace(emptyData())
+              await pruneFiles([])
               flash('✅ Données effacées.')
             }}
           >

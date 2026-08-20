@@ -143,6 +143,12 @@ a { color: var(--accent); }
   margin: 0 auto;
 }
 
+/* Six onglets sur un très petit écran : on resserre plutôt que de tronquer. */
+@media (max-width: 360px) {
+  .nav-btn { font-size: 0.62rem; padding: 6px 1px; }
+  .nav-btn .ico { font-size: 1.05rem; }
+}
+
 @media (min-width: 860px) {
   .app { grid-template-columns: 232px 1fr; }
   .nav {

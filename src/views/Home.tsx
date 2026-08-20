@@ -4,6 +4,7 @@ import type { TabId } from '../App'
 import { addDays, formatLong, isToday, today } from '../lib/dates'
 import { balanceSentence, computeBalance, euros } from '../lib/finance'
 import { ACTIVITY_KIND_ICON, custodyParent, itemsForDay, upcoming } from '../lib/schedule'
+import { expiryState } from './Dossier'
 import { Dot, Empty } from '../components/ui'
 import ExpenseForm from '../components/ExpenseForm'
 import EventForm from '../components/EventForm'
@@ -21,6 +22,16 @@ export default function Home({ goTo }: { goTo: (t: TabId) => void }) {
   const todayItems = useMemo(() => itemsForDay(data, now), [data, now])
   const next = useMemo(() => upcoming(data, addDays(now, 1), 7), [data, now])
   const custodian = custodyParent(now, data.custody, data.custodyOverrides)
+
+  /** Documents à renouveler : ordonnances, attestations… */
+  const aRenouveler = useMemo(
+    () =>
+      data.documents.filter((d) => {
+        const etat = expiryState(d)
+        return etat === 'expire' || etat === 'bientot'
+      }),
+    [data.documents],
+  )
 
   const tone =
     Math.abs(balance.net) < 0.01 ? '' : balance.net > 0 ? 'positive' : 'negative'
@@ -51,6 +62,24 @@ export default function Home({ goTo }: { goTo: (t: TabId) => void }) {
         <div className="amount">{euros(Math.abs(balance.net))}</div>
         <div className="explain">{balanceSentence(balance.net, otherName)}</div>
       </button>
+
+      {aRenouveler.length > 0 && (
+        <button
+          className="callout"
+          style={{
+            display: 'block',
+            width: '100%',
+            border: 0,
+            textAlign: 'left',
+            cursor: 'pointer',
+          }}
+          onClick={() => goTo('dossier')}
+        >
+          ⏳ {aRenouveler.length === 1 ? 'Un document arrive' : 'Des documents arrivent'} à
+          échéance :{' '}
+          <strong>{aRenouveler.map((d) => d.title).join(', ')}</strong>.
+        </button>
+      )}
 
       {custodian && (
         <div className="callout">

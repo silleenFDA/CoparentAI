@@ -3,6 +3,7 @@ import Home from './views/Home'
 import Planning from './views/Planning'
 import Activities from './views/Activities'
 import Finances from './views/Finances'
+import Dossier from './views/Dossier'
 import Settings from './views/Settings'
 
 const TABS = [
@@ -10,6 +11,7 @@ const TABS = [
   { id: 'planning', label: 'Emploi du temps', icon: '🗓️' },
   { id: 'activities', label: 'Activités', icon: '⚽' },
   { id: 'finances', label: 'Finances', icon: '💶' },
+  { id: 'dossier', label: 'Dossier', icon: '📁' },
   { id: 'settings', label: 'Réglages', icon: '⚙️' },
 ] as const
 
@@ -42,6 +44,7 @@ export default function App() {
         {tab === 'planning' && <Planning />}
         {tab === 'activities' && <Activities />}
         {tab === 'finances' && <Finances />}
+        {tab === 'dossier' && <Dossier />}
         {tab === 'settings' && <Settings />}
       </main>
     </div>

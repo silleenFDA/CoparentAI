@@ -109,6 +109,32 @@ export interface Transfer {
   countsInBalance: boolean
 }
 
+/** Fiche d'un document joint. Le fichier lui-même vit dans IndexedDB. */
+export interface SharedDocument {
+  id: ID
+  title: string
+  category: 'juridique' | 'sante' | 'scolaire' | 'assurance' | 'autre'
+  childId: ID | 'all'
+  fileName: string
+  mimeType: string
+  size: number
+  addedAt: string
+  /** Échéance d'une ordonnance renouvelable, d'une attestation… */
+  expiresAt?: string
+  notes?: string
+}
+
+/** Trace écrite : compte rendu, accord, information transmise. */
+export interface Note {
+  id: ID
+  date: string
+  title: string
+  body: string
+  category: 'reunion' | 'accord' | 'info' | 'autre'
+  childId: ID | 'all'
+  createdAt: string
+}
+
 export interface AppData {
   version: number
   parents: Record<ParentId, Parent>
@@ -120,4 +146,6 @@ export interface AppData {
   custodyOverrides: CustodyOverride[]
   expenses: Expense[]
   transfers: Transfer[]
+  documents: SharedDocument[]
+  notes: Note[]
 }

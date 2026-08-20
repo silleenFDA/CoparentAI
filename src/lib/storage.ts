@@ -1,7 +1,8 @@
 import type { Activity, AppData, CustodySettings, Frequency } from '../types'
+import { base64ToBlob, blobToBase64, getFile, putFile } from './files'
 
 const STORAGE_KEY = 'coparentai:data:v1'
-export const DATA_VERSION = 2
+export const DATA_VERSION = 3
 
 /** Alternance de garde en cours, telle que convenue entre les parents. */
 export const CUSTODY_ANCHOR_DATE = '2026-08-29'
@@ -47,6 +48,8 @@ export function emptyData(): AppData {
     custodyOverrides: [],
     expenses: [],
     transfers: [],
+    documents: [],
+    notes: [],
   }
 }
 
@@ -107,6 +110,8 @@ function migrate(raw: Partial<AppData>): AppData {
     custodyOverrides: raw.custodyOverrides ?? [],
     expenses: raw.expenses ?? [],
     transfers: raw.transfers ?? [],
+    documents: raw.documents ?? [],
+    notes: raw.notes ?? [],
   }
 }
 
@@ -151,10 +156,31 @@ function saveViaBrowser(filename: string, json: string): void {
  * (serveur personnel, GitHub Pages), le lien de téléchargement classique
  * fonctionne. On essaie donc la première voie, et on retombe sur la seconde.
  */
+/**
+ * Une sauvegarde embarque les fichiers joints, encodés en texte : restaurer
+ * un seul fichier doit tout ramener, sans quoi les documents disparaîtraient
+ * silencieusement en changeant d'appareil. Le fichier est donc plus lourd —
+ * c'est le prix d'une restauration complète.
+ */
+async function collectFiles(
+  data: AppData,
+): Promise<Record<string, string>> {
+  const files: Record<string, string> = {}
+  for (const doc of data.documents) {
+    try {
+      const blob = await getFile(doc.id)
+      if (blob) files[doc.id] = await blobToBase64(blob)
+    } catch (err) {
+      console.error(`Fichier illisible pour « ${doc.title} »`, err)
+    }
+  }
+  return files
+}
+
 export async function exportData(data: AppData): Promise<ExportResult> {
   const stamp = new Date().toISOString().slice(0, 10)
   const filename = `coparentai-sauvegarde-${stamp}.json`
-  const json = JSON.stringify(data, null, 2)
+  const json = JSON.stringify({ ...data, files: await collectFiles(data) }, null, 2)
 
   try {
     const downloads = await window.claude?.use('downloads')
@@ -178,10 +204,34 @@ export async function exportData(data: AppData): Promise<ExportResult> {
   }
 }
 
-export function parseImported(text: string): AppData {
+/**
+ * Relit une sauvegarde et remet les fichiers joints en place. Les fiches sans
+ * fichier retrouvé sont écartées : mieux vaut un document absent qu'une entrée
+ * qui promet un PDF introuvable.
+ */
+export async function parseImported(text: string): Promise<AppData> {
   const parsed = JSON.parse(text)
   if (typeof parsed !== 'object' || parsed === null) {
     throw new Error('Fichier illisible')
   }
-  return migrate(parsed as Partial<AppData>)
+
+  const { files, ...rest } = parsed as Partial<AppData> & {
+    files?: Record<string, string>
+  }
+  const data = migrate(rest)
+
+  if (!files) return data
+
+  const restored: string[] = []
+  for (const doc of data.documents) {
+    const base64 = files[doc.id]
+    if (!base64) continue
+    try {
+      await putFile(doc.id, base64ToBlob(base64, doc.mimeType))
+      restored.push(doc.id)
+    } catch (err) {
+      console.error(`Restauration impossible pour « ${doc.title} »`, err)
+    }
+  }
+  return { ...data, documents: data.documents.filter((d) => restored.includes(d.id)) }
 }

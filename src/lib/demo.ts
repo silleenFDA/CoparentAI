@@ -99,5 +99,27 @@ export function demoData(): AppData {
     transfers: [
       { id: newId(), date: addDays(today(), -20), amount: 150, from: 'other', to: 'me', kind: 'remboursement', label: 'Régularisation août', countsInBalance: true },
     ],
+    // Pas de document d'exemple : ils supposeraient de vrais fichiers joints.
+    documents: [],
+    notes: [
+      {
+        id: newId(),
+        date: addDays(today(), -15),
+        title: 'Point de rentrée',
+        body: "Accord sur la répartition des frais de rentrée : moitié-moitié, y compris le matériel de sport de Mathis.\nMaxime garde son forfait téléphone actuel jusqu'en janvier.",
+        category: 'reunion',
+        childId: 'all',
+        createdAt: addDays(today(), -15),
+      },
+      {
+        id: newId(),
+        date: addDays(today(), -6),
+        title: 'Orthodontie de Mathis',
+        body: 'Le praticien confirme 18 mois de traitement. Mensualité de 145 €, à partager. Prochaine visite dans 6 semaines.',
+        category: 'info',
+        childId: 'all',
+        createdAt: addDays(today(), -6),
+      },
+    ],
   }
 }

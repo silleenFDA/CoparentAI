@@ -14,6 +14,7 @@ dépenses entre les deux parents.
 | **Emploi du temps** | Trois onglets : l'emploi du temps de Maxime, celui de Mathis, et une vue des activités hors cours des deux enfants. |
 | **Activités** | Tout ce qui ne relève pas de l'emploi du temps scolaire : sport, musique, rendez-vous médicaux, compétitions. |
 | **Finances** | Chaque dépense, qui l'a payée, comment elle se partage, et le calcul automatique de qui doit combien à qui. |
+| **Dossier** | Les documents de référence (jugement, ordonnances, attestations) et les notes écrites : comptes rendus, accords, informations transmises. |
 | **Réglages** | Les prénoms, les couleurs, le rythme de garde, les catégories, et la sauvegarde de vos données. |
 
 ## L'emploi du temps
@@ -101,6 +102,31 @@ Deux ajustements possibles :
 - Une activité **une semaine sur deux** : au lieu de « semaines paires », vous
   choisissez « semaines chez Maman » ou « semaines chez Papa ». C'est plus
   parlant, et cela reste juste même si l'alternance est décalée.
+
+## Le dossier
+
+**Documents.** On y range les PDF et photos qu'on cherche toujours au mauvais
+moment : jugement, ordonnance renouvelable, attestation d'assurance. Chaque
+document porte une catégorie, l'enfant concerné et, si besoin, une **date de fin
+de validité** — un rappel apparaît alors sur l'accueil un mois avant l'échéance,
+et le document remonte en tête de liste.
+
+Les fichiers ne tiennent pas dans le stockage habituel du navigateur, plafonné
+vers 5 Mo : ils sont rangés dans IndexedDB, prévu pour ça. Ils sont **inclus
+dans la sauvegarde**, donc une restauration ramène aussi les PDF — le fichier de
+sauvegarde est d'autant plus lourd, c'est voulu.
+
+⚠️ **Ce n'est pas un coffre-fort.** Un navigateur peut vider son stockage quand
+l'appareil manque de place, et iOS le fait après plusieurs semaines sans usage.
+L'application demande au navigateur de conserver ces données en priorité, mais
+il peut refuser. **L'original doit rester ailleurs** : un jugement de divorce ne
+doit jamais exister uniquement ici.
+
+**Notes.** Comptes rendus de réunion, accords, informations transmises. Chaque
+note est datée et attribuée à un enfant ou à la famille. C'est un journal
+personnel, pas une messagerie : tant que l'application tourne sans serveur, elle
+n'envoie rien à personne. Une trace écrite et datée reste utile — elle sert
+d'abord à se souvenir de ce qui a été convenu.
 
 ## Comment le solde est calculé
 
