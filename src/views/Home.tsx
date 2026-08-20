@@ -16,8 +16,8 @@ export default function Home({ goTo }: { goTo: (t: TabId) => void }) {
 
   const now = today()
   const balance = useMemo(
-    () => computeBalance(data.expenses, data.transfers),
-    [data.expenses, data.transfers],
+    () => computeBalance(data.expenses, data.transfers, data.allowances),
+    [data.expenses, data.transfers, data.allowances],
   )
   const todayItems = useMemo(() => itemsForDay(data, now), [data, now])
   const next = useMemo(() => upcoming(data, addDays(now, 1), 7), [data, now])

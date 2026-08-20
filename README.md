@@ -142,6 +142,37 @@ Le solde affiché sur l'accueil, c'est le résultat de tout cela mis bout à bou
 Un versement peut être marqué « hors solde » s'il ne doit pas entrer dans ce
 calcul.
 
+## Les sommes perçues
+
+L'argent qui arrive de l'extérieur pour les enfants — allocation de rentrée,
+allocations familiales, bourse, remboursement de mutuelle — s'enregistre dans
+**Finances → Sommes perçues**.
+
+C'est l'exact miroir d'une dépense : le parent qui encaisse une somme revenant
+aux deux **détient la part de l'autre**. Les dépenses qu'on rattache ensuite à
+cette somme viennent la compenser.
+
+Exemple, avec 780 € d'allocation de rentrée perçus par la mère et partagés
+50/50 :
+
+| | Effet sur le solde |
+| --- | --- |
+| Allocation de 780 € perçue par la mère | elle doit 390 € au père |
+| 515 € de fournitures avancés par la mère | le père lui doit 257,50 € |
+| **Solde** | **la mère doit 132,55 € au père** |
+
+Soit exactement la moitié du reliquat de 265 €. Le calcul se fait donc tout
+seul : il n'y a pas à soustraire soi-même les dépenses de l'allocation.
+
+Et il reste juste quand les dépenses **dépassent** l'allocation : c'est alors
+l'autre parent qui doit sa part du dépassement. Le panneau de chaque somme
+perçue affiche le détail — perçu, dépensé, reliquat, montant à reverser — et
+rattacher une dépense se fait depuis le champ « Payée avec une somme perçue ? »
+du formulaire de dépense.
+
+Un **versement** reste autre chose : c'est de l'argent qui passe réellement d'un
+parent à l'autre, et qui vient effacer la dette constatée.
+
 ## Où sont mes données ?
 
 **Uniquement dans le navigateur de l'appareil que vous utilisez.** Rien n'est

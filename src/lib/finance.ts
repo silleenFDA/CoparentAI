@@ -1,4 +1,4 @@
-import type { Expense, ParentId, Transfer } from '../types'
+import type { Allowance, Expense, ID, ParentId, Transfer } from '../types'
 import { monthKey } from './dates'
 
 export function round2(n: number): number {
@@ -24,6 +24,17 @@ export function expenseBalance(e: Expense): number {
     : -e.amount * e.shareMe // il a avancé ma part
 }
 
+/**
+ * Miroir d'une dépense : encaisser une somme qui revient aux deux, c'est
+ * détenir la part de l'autre. Résultat positif = en ma faveur.
+ */
+export function allowanceBalance(a: Allowance): number {
+  const shareOther = 1 - a.shareMe
+  return a.receivedBy === 'me'
+    ? -a.amount * shareOther // je détiens sa part
+    : a.amount * a.shareMe // il détient la mienne
+}
+
 /** Résultat positif = en ma faveur (l'argent est arrivé chez l'autre). */
 export function transferBalance(t: Transfer): number {
   if (!t.countsInBalance) return 0
@@ -41,11 +52,14 @@ export interface Balance {
   otherShareTotal: number
   transfersToMe: number
   transfersToOther: number
+  allowancesToMe: number
+  allowancesToOther: number
 }
 
 export function computeBalance(
   expenses: Expense[],
   transfers: Transfer[],
+  allowances: Allowance[] = [],
 ): Balance {
   let net = 0
   let totalPaidByMe = 0
@@ -69,6 +83,14 @@ export function computeBalance(
     else transfersToOther += t.amount
   }
 
+  let allowancesToMe = 0
+  let allowancesToOther = 0
+  for (const a of allowances) {
+    net += allowanceBalance(a)
+    if (a.receivedBy === 'me') allowancesToMe += a.amount
+    else allowancesToOther += a.amount
+  }
+
   return {
     net: round2(net),
     totalPaidByMe: round2(totalPaidByMe),
@@ -77,7 +99,44 @@ export function computeBalance(
     otherShareTotal: round2(otherShareTotal),
     transfersToMe: round2(transfersToMe),
     transfersToOther: round2(transfersToOther),
+    allowancesToMe: round2(allowancesToMe),
+    allowancesToOther: round2(allowancesToOther),
   }
+}
+
+/**
+ * L'aide vue comme une enveloppe : ce qui est entré, ce qui en a été
+ * dépensé, ce qu'il en reste.
+ *
+ * `balance` ne se déduit pas du reliquat mais des contributions réelles au
+ * solde : les deux coïncident quand l'aide et les dépenses se partagent de
+ * la même façon, et seul ce calcul-ci reste juste quand ce n'est pas le cas.
+ */
+export interface Envelope {
+  received: number
+  spent: number
+  remainder: number
+  /** > 0 : l'autre parent me doit. < 0 : je dois à l'autre parent. */
+  balance: number
+  expenseCount: number
+}
+
+export function envelope(allowance: Allowance, expenses: Expense[]): Envelope {
+  const linked = expenses.filter((e) => e.allowanceId === allowance.id)
+  const spent = sumBy(linked, (e) => e.amount)
+  return {
+    received: round2(allowance.amount),
+    spent,
+    remainder: round2(allowance.amount - spent),
+    balance: round2(
+      allowanceBalance(allowance) + linked.reduce((s, e) => s + expenseBalance(e), 0),
+    ),
+    expenseCount: linked.length,
+  }
+}
+
+export function allowanceById(allowances: Allowance[], id?: ID): Allowance | null {
+  return id ? (allowances.find((a) => a.id === id) ?? null) : null
 }
 
 /**
@@ -120,10 +179,15 @@ export function groupTotals(
 }
 
 /** Tous les mois présents dans les données, du plus récent au plus ancien. */
-export function monthsPresent(expenses: Expense[], transfers: Transfer[]): string[] {
+export function monthsPresent(
+  expenses: Expense[],
+  transfers: Transfer[],
+  allowances: Allowance[] = [],
+): string[] {
   const set = new Set<string>()
   expenses.forEach((e) => set.add(monthKey(e.date)))
   transfers.forEach((t) => set.add(monthKey(t.date)))
+  allowances.forEach((a) => set.add(monthKey(a.date)))
   return [...set].sort().reverse()
 }
 

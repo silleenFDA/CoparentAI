@@ -2,7 +2,7 @@ import type { Activity, AppData, CustodySettings, Frequency } from '../types'
 import { base64ToBlob, blobToBase64, getFile, putFile } from './files'
 
 const STORAGE_KEY = 'coparentai:data:v1'
-export const DATA_VERSION = 3
+export const DATA_VERSION = 4
 
 /** Alternance de garde en cours, telle que convenue entre les parents. */
 export const CUSTODY_ANCHOR_DATE = '2026-08-29'
@@ -47,6 +47,7 @@ export function emptyData(): AppData {
     },
     custodyOverrides: [],
     expenses: [],
+    allowances: [],
     transfers: [],
     documents: [],
     notes: [],
@@ -109,6 +110,7 @@ function migrate(raw: Partial<AppData>): AppData {
     custody: migrateCustody(raw.custody, base.custody),
     custodyOverrides: raw.custodyOverrides ?? [],
     expenses: raw.expenses ?? [],
+    allowances: raw.allowances ?? [],
     transfers: raw.transfers ?? [],
     documents: raw.documents ?? [],
     notes: raw.notes ?? [],

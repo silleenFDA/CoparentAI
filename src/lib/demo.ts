@@ -39,6 +39,7 @@ function cours(
 export function demoData(): AppData {
   const maxime = newId()
   const mathis = newId()
+  const primeRentree = newId()
   const weekStart = custodyWeekStart(today(), DEMO_CUSTODY)
 
   return {
@@ -85,10 +86,25 @@ export function demoData(): AppData {
     ],
     custody: DEMO_CUSTODY,
     custodyOverrides: [],
+    allowances: [
+      {
+        id: primeRentree,
+        date: addDays(today(), -30),
+        label: 'Allocation de rentrée scolaire',
+        amount: 780,
+        kind: 'allocation',
+        receivedBy: 'me',
+        shareMe: 0.5,
+        childId: 'all',
+        notes: 'Perçue pour les deux enfants.',
+      },
+    ],
     expenses: [
       { id: newId(), date: addDays(today(), -34), label: 'Licence basket Maxime', amount: 245, category: 'Activités extra-scolaires', childId: maxime, paidBy: 'me', shareMe: 0.5 },
       { id: newId(), date: addDays(today(), -31), label: 'Conservatoire — trimestre', amount: 186, category: 'Activités extra-scolaires', childId: mathis, paidBy: 'other', shareMe: 0.5 },
-      { id: newId(), date: addDays(today(), -28), label: 'Fournitures rentrée', amount: 132.4, category: 'Scolarité', childId: 'all', paidBy: 'me', shareMe: 0.5 },
+      { id: newId(), date: addDays(today(), -28), label: 'Fournitures rentrée', amount: 132.4, category: 'Scolarité', childId: 'all', paidBy: 'me', shareMe: 0.5, allowanceId: primeRentree },
+      { id: newId(), date: addDays(today(), -27), label: 'Cartables et trousses', amount: 118, category: 'Scolarité', childId: 'all', paidBy: 'me', shareMe: 0.5, allowanceId: primeRentree },
+      { id: newId(), date: addDays(today(), -26), label: 'Vêtements de rentrée', amount: 264.5, category: 'Vêtements', childId: 'all', paidBy: 'me', shareMe: 0.5, allowanceId: primeRentree },
       { id: newId(), date: addDays(today(), -21), label: 'Cantine septembre', amount: 210, category: 'Cantine', childId: 'all', paidBy: 'other', shareMe: 0.5 },
       { id: newId(), date: addDays(today(), -17), label: 'Chaussures de sport Mathis', amount: 79.9, category: 'Vêtements', childId: mathis, paidBy: 'me', shareMe: 0.5 },
       { id: newId(), date: addDays(today(), -12), label: 'Orthodontie — mensualité', amount: 145, category: 'Santé', childId: mathis, paidBy: 'me', shareMe: 0.5 },

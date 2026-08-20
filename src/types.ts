@@ -93,6 +93,29 @@ export interface Expense {
   paidBy: ParentId
   /** Part qui m'incombe, entre 0 et 1 (0.5 = moitié/moitié). */
   shareMe: number
+  /** Aide sur laquelle cette dépense a été prise, s'il y en a une. */
+  allowanceId?: ID
+  notes?: string
+}
+
+/**
+ * Somme perçue de l'extérieur pour les enfants : allocation de rentrée,
+ * allocations familiales, bourse, remboursement de mutuelle.
+ *
+ * C'est l'exact miroir d'une dépense. Un parent l'encaisse en entier alors
+ * qu'elle revient aux deux : il en doit donc la part de l'autre, que les
+ * dépenses financées avec viennent ensuite compenser.
+ */
+export interface Allowance {
+  id: ID
+  date: string
+  label: string
+  amount: number
+  kind: 'allocation' | 'bourse' | 'remboursement' | 'autre'
+  receivedBy: ParentId
+  /** Part qui me revient, entre 0 et 1. */
+  shareMe: number
+  childId: ID | 'all'
   notes?: string
 }
 
@@ -145,6 +168,7 @@ export interface AppData {
   custody: CustodySettings
   custodyOverrides: CustodyOverride[]
   expenses: Expense[]
+  allowances: Allowance[]
   transfers: Transfer[]
   documents: SharedDocument[]
   notes: Note[]

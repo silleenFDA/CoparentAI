@@ -1,10 +1,17 @@
 import { useState } from 'react'
 import { useStore } from '../store'
-import type { Expense, ParentId } from '../types'
+import type { Allowance, ParentId } from '../types'
 import { today } from '../lib/dates'
 import { newId } from '../lib/storage'
 import { euros, round2 } from '../lib/finance'
 import { Field, Modal, Segment } from './ui'
+
+export const ALLOWANCE_KINDS: Record<Allowance['kind'], string> = {
+  allocation: 'Allocation',
+  bourse: 'Bourse',
+  remboursement: 'Remboursement',
+  autre: 'Autre',
+}
 
 const SHARE_PRESETS = [
   { value: '0.5', label: '50 / 50' },
@@ -13,11 +20,11 @@ const SHARE_PRESETS = [
   { value: 'custom', label: 'Autre %' },
 ]
 
-export default function ExpenseForm({
+export default function AllowanceForm({
   initial,
   onClose,
 }: {
-  initial?: Expense
+  initial?: Allowance
   onClose: () => void
 }) {
   const { data, update, meName, otherName } = useStore()
@@ -26,9 +33,9 @@ export default function ExpenseForm({
   const [date, setDate] = useState(initial?.date ?? today())
   const [label, setLabel] = useState(initial?.label ?? '')
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '')
-  const [category, setCategory] = useState(initial?.category ?? data.categories[0])
+  const [kind, setKind] = useState<Allowance['kind']>(initial?.kind ?? 'allocation')
+  const [receivedBy, setReceivedBy] = useState<ParentId>(initial?.receivedBy ?? 'me')
   const [childId, setChildId] = useState<string>(initial?.childId ?? 'all')
-  const [paidBy, setPaidBy] = useState<ParentId>(initial?.paidBy ?? 'me')
   const [sharePreset, setSharePreset] = useState(() => {
     const s = initial?.shareMe ?? 0.5
     return s === 0.5 ? '0.5' : s === 1 ? '1' : s === 0 ? '0' : 'custom'
@@ -36,7 +43,6 @@ export default function ExpenseForm({
   const [customShare, setCustomShare] = useState(
     String(Math.round((initial?.shareMe ?? 0.5) * 100)),
   )
-  const [allowanceId, setAllowanceId] = useState<string>(initial?.allowanceId ?? '')
   const [notes, setNotes] = useState(initial?.notes ?? '')
 
   const shareMe =
@@ -45,49 +51,66 @@ export default function ExpenseForm({
       : Number(sharePreset)
 
   const amountNum = Number(amount.replace(',', '.')) || 0
-  const owed = round2(
-    paidBy === 'me' ? amountNum * (1 - shareMe) : amountNum * shareMe,
+  const du = round2(
+    receivedBy === 'me' ? amountNum * (1 - shareMe) : amountNum * shareMe,
   )
   const valid = label.trim().length > 0 && amountNum > 0
 
+  /** Dépenses déjà rattachées : les délier si l'aide disparaît. */
+  const liees = data.expenses.filter((e) => e.allowanceId === initial?.id)
+
   function submit() {
     if (!valid) return
-    const expense: Expense = {
+    const allowance: Allowance = {
       id: initial?.id ?? newId(),
       date,
       label: label.trim(),
       amount: round2(amountNum),
-      category,
-      childId,
-      paidBy,
+      kind,
+      receivedBy,
       shareMe,
-      allowanceId: allowanceId || undefined,
+      childId,
       notes: notes.trim() || undefined,
     }
     update((d) => ({
       ...d,
-      expenses: isEdit
-        ? d.expenses.map((e) => (e.id === expense.id ? expense : e))
-        : [expense, ...d.expenses],
+      allowances: isEdit
+        ? d.allowances.map((a) => (a.id === allowance.id ? allowance : a))
+        : [allowance, ...d.allowances],
     }))
     onClose()
   }
 
   function remove() {
     if (!initial) return
-    if (!confirm(`Supprimer « ${initial.label} » ?`)) return
-    update((d) => ({ ...d, expenses: d.expenses.filter((e) => e.id !== initial.id) }))
+    const suite = liees.length
+      ? ` Les ${liees.length} dépense(s) rattachées seront conservées, mais plus reliées à aucune aide.`
+      : ''
+    if (!confirm(`Supprimer « ${initial.label} » ?${suite}`)) return
+    update((d) => ({
+      ...d,
+      allowances: d.allowances.filter((a) => a.id !== initial.id),
+      expenses: d.expenses.map((e) =>
+        e.allowanceId === initial.id ? { ...e, allowanceId: undefined } : e,
+      ),
+    }))
     onClose()
   }
 
   return (
-    <Modal title={isEdit ? 'Modifier la dépense' : 'Nouvelle dépense'} onClose={onClose}>
-      <Field label="Quoi ?">
+    <Modal
+      title={isEdit ? 'Modifier la somme perçue' : 'Nouvelle somme perçue'}
+      onClose={onClose}
+    >
+      <Field
+        label="Quoi ?"
+        hint="Allocation de rentrée, allocations familiales, bourse, remboursement de mutuelle…"
+      >
         <input
           type="text"
           value={label}
           autoFocus
-          placeholder="Ex. Licence de basket, dentiste, cartable…"
+          placeholder="Ex. Allocation de rentrée scolaire"
           onChange={(e) => setLabel(e.target.value)}
         />
       </Field>
@@ -110,11 +133,14 @@ export default function ExpenseForm({
       </div>
 
       <div className="field-row">
-        <Field label="Catégorie">
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {data.categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
+        <Field label="Type">
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value as Allowance['kind'])}
+          >
+            {Object.entries(ALLOWANCE_KINDS).map(([k, l]) => (
+              <option key={k} value={k}>
+                {l}
               </option>
             ))}
           </select>
@@ -131,10 +157,10 @@ export default function ExpenseForm({
         </Field>
       </div>
 
-      <Field label="Qui a payé ?">
+      <Field label="Qui l'a perçue ?">
         <Segment<ParentId>
-          value={paidBy}
-          onChange={setPaidBy}
+          value={receivedBy}
+          onChange={setReceivedBy}
           options={[
             { value: 'me', label: meName },
             { value: 'other', label: otherName },
@@ -142,12 +168,8 @@ export default function ExpenseForm({
         />
       </Field>
 
-      <Field label="Répartition" hint="Quelle part de cette dépense est à ma charge ?">
-        <Segment
-          value={sharePreset}
-          onChange={setSharePreset}
-          options={SHARE_PRESETS}
-        />
+      <Field label="Répartition" hint="Quelle part de cette somme me revient ?">
+        <Segment value={sharePreset} onChange={setSharePreset} options={SHARE_PRESETS} />
       </Field>
 
       {sharePreset === 'custom' && (
@@ -162,42 +184,24 @@ export default function ExpenseForm({
         </Field>
       )}
 
-      {data.allowances.length > 0 && (
-        <Field
-          label="Payée avec une somme perçue ?"
-          hint="Rattachez la dépense à une allocation pour suivre ce qu'il en reste."
-        >
-          <select
-            value={allowanceId}
-            onChange={(e) => setAllowanceId(e.target.value)}
-          >
-            <option value="">Non, dépense ordinaire</option>
-            {data.allowances.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.label} — {euros(a.amount)}
-              </option>
-            ))}
-          </select>
-        </Field>
-      )}
-
       <Field label="Note (facultatif)">
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
       </Field>
 
       {amountNum > 0 && (
         <div className="callout">
-          {owed < 0.01 ? (
-            <>Cette dépense n’a aucun impact sur le solde.</>
-          ) : paidBy === 'me' ? (
+          {du < 0.01 ? (
+            <>Cette somme n’a aucun impact sur le solde.</>
+          ) : receivedBy === 'me' ? (
             <>
-              <strong>{otherName}</strong> vous devra <strong>{euros(owed)}</strong> pour
-              cette dépense.
+              Vous détenez <strong>{euros(du)}</strong> qui reviennent à{' '}
+              <strong>{otherName}</strong>. Les dépenses que vous rattacherez à cette
+              somme viendront diminuer ce montant d’autant.
             </>
           ) : (
             <>
-              Vous devrez <strong>{euros(owed)}</strong> à <strong>{otherName}</strong>{' '}
-              pour cette dépense.
+              <strong>{otherName}</strong> détient <strong>{euros(du)}</strong> qui vous
+              reviennent.
             </>
           )}
         </div>

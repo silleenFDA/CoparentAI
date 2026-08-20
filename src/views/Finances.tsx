@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
-import type { Expense, Transfer } from '../types'
+import type { Allowance, Expense, Transfer } from '../types'
 import { formatMonth, formatShort, monthKey } from '../lib/dates'
 import {
+  allowanceById,
   balanceSentence,
   computeBalance,
+  envelope,
   euros,
   expenseBalance,
   groupTotals,
@@ -14,6 +16,7 @@ import {
 import { Empty, Stat } from '../components/ui'
 import ExpenseForm from '../components/ExpenseForm'
 import TransferForm from '../components/TransferForm'
+import AllowanceForm, { ALLOWANCE_KINDS } from '../components/AllowanceForm'
 
 const KIND_LABEL: Record<Transfer['kind'], string> = {
   remboursement: 'Remboursement',
@@ -23,7 +26,9 @@ const KIND_LABEL: Record<Transfer['kind'], string> = {
 
 export default function Finances() {
   const { data, childName, childColor, meName, otherName } = useStore()
-  const [tab, setTab] = useState<'expenses' | 'transfers' | 'summary'>('expenses')
+  const [tab, setTab] = useState<
+    'expenses' | 'allowances' | 'transfers' | 'summary'
+  >('expenses')
   const [month, setMonth] = useState('all')
   const [child, setChild] = useState('all')
   const [category, setCategory] = useState('all')
@@ -31,10 +36,12 @@ export default function Finances() {
   const [editExpense, setEditExpense] = useState<Expense | null>(null)
   const [newTransfer, setNewTransfer] = useState(false)
   const [editTransfer, setEditTransfer] = useState<Transfer | null>(null)
+  const [newAllowance, setNewAllowance] = useState(false)
+  const [editAllowance, setEditAllowance] = useState<Allowance | null>(null)
 
   const months = useMemo(
-    () => monthsPresent(data.expenses, data.transfers),
-    [data.expenses, data.transfers],
+    () => monthsPresent(data.expenses, data.transfers, data.allowances),
+    [data.expenses, data.transfers, data.allowances],
   )
 
   const filteredExpenses = useMemo(
@@ -57,14 +64,23 @@ export default function Finances() {
 
   /** Le solde global tient compte de TOUT l'historique, sans les filtres. */
   const globalBalance = useMemo(
-    () => computeBalance(data.expenses, data.transfers),
-    [data.expenses, data.transfers],
+    () => computeBalance(data.expenses, data.transfers, data.allowances),
+    [data.expenses, data.transfers, data.allowances],
+  )
+
+  const filteredAllowances = useMemo(
+    () =>
+      data.allowances
+        .filter((a) => month === 'all' || monthKey(a.date) === month)
+        .filter((a) => child === 'all' || a.childId === child)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    [data.allowances, month, child],
   )
 
   /** Les statistiques suivent, elles, les filtres choisis. */
   const view = useMemo(
-    () => computeBalance(filteredExpenses, filteredTransfers),
-    [filteredExpenses, filteredTransfers],
+    () => computeBalance(filteredExpenses, filteredTransfers, filteredAllowances),
+    [filteredExpenses, filteredTransfers, filteredAllowances],
   )
 
   const byCategory = useMemo(
@@ -101,6 +117,9 @@ export default function Finances() {
           <div className="sub">Dépenses partagées et versements entre parents.</div>
         </div>
         <div className="row">
+          <button className="btn btn-sm" onClick={() => setNewAllowance(true)}>
+            + Somme perçue
+          </button>
           <button className="btn btn-sm" onClick={() => setNewTransfer(true)}>
             + Versement
           </button>
@@ -133,6 +152,12 @@ export default function Finances() {
           onClick={() => setTab('expenses')}
         >
           Dépenses
+        </button>
+        <button
+          className={tab === 'allowances' ? 'on' : ''}
+          onClick={() => setTab('allowances')}
+        >
+          Sommes perçues
         </button>
         <button
           className={tab === 'transfers' ? 'on' : ''}
@@ -212,6 +237,8 @@ export default function Finances() {
                       <div className="meta">
                         {formatShort(e.date)} · {e.category} · {childName(e.childId)} ·
                         payé par {e.paidBy === 'me' ? meName : otherName}
+                        {allowanceById(data.allowances, e.allowanceId) &&
+                          ` · sur « ${allowanceById(data.allowances, e.allowanceId)!.label} »`}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -243,6 +270,117 @@ export default function Finances() {
             La colonne de droite indique l'effet sur le solde :{' '}
             <span style={{ color: 'var(--green)' }}>vert</span> = en votre faveur,{' '}
             <span style={{ color: 'var(--red)' }}>rouge</span> = en faveur de {otherName}.
+          </p>
+        </div>
+      )}
+
+      {tab === 'allowances' && (
+        <div className="card">
+          <div className="card-title">
+            <h2>
+              {filteredAllowances.length} somme
+              {filteredAllowances.length > 1 ? 's' : ''} perçue
+              {filteredAllowances.length > 1 ? 's' : ''}
+            </h2>
+            <strong>
+              {euros(filteredAllowances.reduce((sum, a) => sum + a.amount, 0))}
+            </strong>
+          </div>
+
+          {filteredAllowances.length === 0 ? (
+            <Empty>
+              Rien pour ce filtre. Enregistrez ici l'argent qui arrive de l'extérieur
+              pour les enfants : allocation de rentrée, allocations familiales, bourse,
+              remboursement de mutuelle.
+            </Empty>
+          ) : (
+            <div className="list">
+              {filteredAllowances.map((a) => {
+                const env = envelope(a, data.expenses)
+                const beneficiaire = a.receivedBy === 'me' ? meName : otherName
+                return (
+                  <div key={a.id} className="item" style={{ alignItems: 'flex-start' }}>
+                    <span
+                      className="stripe"
+                      style={{ background: childColor(a.childId) }}
+                    />
+                    <div className="body">
+                      <div className="title">{a.label}</div>
+                      <div className="meta">
+                        {formatShort(a.date)} · {ALLOWANCE_KINDS[a.kind]} ·{' '}
+                        {childName(a.childId)} · perçue par {beneficiaire}
+                      </div>
+
+                      {env.expenseCount > 0 ? (
+                        <div className="envelope">
+                          <div className="envelope-line">
+                            <span>Perçu</span>
+                            <span>{euros(env.received)}</span>
+                          </div>
+                          <div className="envelope-line">
+                            <span>
+                              Dépensé ({env.expenseCount} dépense
+                              {env.expenseCount > 1 ? 's' : ''})
+                            </span>
+                            <span>− {euros(env.spent)}</span>
+                          </div>
+                          <div className="envelope-line total">
+                            <span>{env.remainder >= 0 ? 'Reliquat' : 'Dépassement'}</span>
+                            <span>{euros(Math.abs(env.remainder))}</span>
+                          </div>
+                          <div
+                            className="envelope-line"
+                            style={{
+                              color:
+                                Math.abs(env.balance) < 0.01
+                                  ? undefined
+                                  : env.balance > 0
+                                    ? 'var(--green)'
+                                    : 'var(--red)',
+                            }}
+                          >
+                            <span>
+                              {Math.abs(env.balance) < 0.01
+                                ? 'Rien à reverser'
+                                : env.balance < 0
+                                  ? `À reverser à ${otherName}`
+                                  : `${otherName} vous doit`}
+                            </span>
+                            <span>
+                              {Math.abs(env.balance) < 0.01
+                                ? ''
+                                : euros(Math.abs(env.balance))}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="faint" style={{ marginTop: 6 }}>
+                          Aucune dépense rattachée. Dans une dépense, choisissez cette
+                          somme au champ « Payée avec une somme perçue ? » pour suivre
+                          ce qu'il en reste.
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div className="amount">{euros(a.amount)}</div>
+                      <button
+                        className="icon-btn"
+                        title="Modifier"
+                        onClick={() => setEditAllowance(a)}
+                      >
+                        ✎
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <p className="faint" style={{ marginTop: 12 }}>
+            Une somme perçue fonctionne à l'envers d'une dépense : celui qui l'encaisse
+            détient la part de l'autre, et les dépenses qu'on y rattache viennent la
+            compenser. Le reliquat à reverser se calcule donc tout seul.
           </p>
         </div>
       )}
@@ -324,6 +462,11 @@ export default function Finances() {
               <Stat k={`Part réelle de ${otherName}`} v={euros(view.otherShareTotal)} />
               <Stat k="Reçu de l'autre parent" v={euros(view.transfersToMe)} />
               <Stat k={`Versé à ${otherName}`} v={euros(view.transfersToOther)} />
+              <Stat k="Sommes perçues par vous" v={euros(view.allowancesToMe)} />
+              <Stat
+                k={`Sommes perçues par ${otherName}`}
+                v={euros(view.allowancesToOther)}
+              />
             </div>
             <p className="faint" style={{ marginTop: 12 }}>
               « Avancé » = l'argent réellement sorti de la poche. « Part réelle » = ce qui
@@ -385,6 +528,10 @@ export default function Finances() {
       {newExpense && <ExpenseForm onClose={() => setNewExpense(false)} />}
       {editExpense && (
         <ExpenseForm initial={editExpense} onClose={() => setEditExpense(null)} />
+      )}
+      {newAllowance && <AllowanceForm onClose={() => setNewAllowance(false)} />}
+      {editAllowance && (
+        <AllowanceForm initial={editAllowance} onClose={() => setEditAllowance(null)} />
       )}
       {newTransfer && <TransferForm onClose={() => setNewTransfer(false)} />}
       {editTransfer && (
