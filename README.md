@@ -31,6 +31,35 @@ La semaine affichée va du **samedi au vendredi**, pour coïncider avec le rythm
 de garde : chaque colonne de sept jours correspond à une semaine chez un seul
 parent.
 
+## Importer l'emploi du temps scolaire
+
+Pronote et École Directe proposent un export **iCal** (fichier `.ics`) de
+l'emploi du temps. Onglet **Activités → Cours → Importer un .ics**.
+
+Ces exports ne décrivent pas la semaine type : ils listent toutes les séances
+datées du trimestre. L'application reconstitue donc la semaine en repérant les
+créneaux qui reviennent, puis affiche ce qu'elle a compris **avant** d'écrire
+quoi que ce soit. Sur cet écran :
+
+- Le nombre à droite indique combien de fois le créneau revient sur la période.
+  Un nombre deux fois plus faible que les autres signale un cours en semaine A /
+  semaine B — il sera importé comme hebdomadaire, à corriger à la main.
+- Les séances vues une seule fois sont écartées : ce sont des événements
+  ponctuels, pas des cours.
+- On peut décocher ce qu'on ne veut pas (permanences, options).
+- « Raccourcir les intitulés » ne garde que la matière et retire le nom du
+  professeur, très présent dans les exports Pronote.
+- Réimporter remplace les cours existants de cet enfant, sans toucher à ses
+  activités hors cours ni à l'autre enfant.
+
+Les heures sont reprises telles qu'elles s'affichent dans l'emploi du temps,
+y compris quand l'export les exprime en temps universel.
+
+**Pas de synchronisation automatique** : le navigateur n'a pas le droit d'aller
+chercher le calendrier chez Pronote depuis une autre adresse. Il faut donc
+réimporter le fichier quand l'emploi du temps change. Cette limite disparaîtra
+le jour où l'application tournera sur un serveur.
+
 ## La garde alternée
 
 Elle se règle par une **date de départ** plutôt que par des numéros de semaine —
