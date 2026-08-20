@@ -6,21 +6,27 @@ import type {
   OneOffEvent,
   ParentId,
 } from '../types'
-import { addDays, compareTime, isoWeekNumber, startOfWeek, weekdayOf } from './dates'
+import { addDays, compareTime, daysBetween, weekdayOf } from './dates'
 
-/**
- * Numéro de la "semaine de garde" contenant `iso`, en tenant compte du jour
- * de bascule. Si la bascule est le vendredi, la semaine de garde va du
- * vendredi au jeudi suivant.
- */
-function custodyWeekNumber(iso: string, changeoverWeekday: number): number {
-  const wd = weekdayOf(iso)
-  const daysSinceChangeover = (wd - changeoverWeekday + 7) % 7
-  const weekStart = addDays(iso, -daysSinceChangeover)
-  return isoWeekNumber(weekStart)
+export function otherParent(p: ParentId): ParentId {
+  return p === 'me' ? 'other' : 'me'
 }
 
-/** Quel parent a les enfants ce jour-là ? `null` si le suivi est désactivé. */
+/**
+ * Premier jour de la semaine de garde contenant `iso`. Le jour de bascule
+ * est celui de la date de référence : si l'alternance démarre un samedi,
+ * chaque semaine de garde va du samedi au vendredi suivant.
+ */
+export function custodyWeekStart(iso: string, custody: CustodySettings): string {
+  const shift = ((daysBetween(custody.anchorDate, iso) % 7) + 7) % 7
+  return addDays(iso, -shift)
+}
+
+/**
+ * Quel parent a les enfants ce jour-là ? `null` si le suivi est désactivé.
+ * L'alternance se prolonge indéfiniment de part et d'autre de la date de
+ * référence — c'est `custodyEnded` qui signale qu'il faut la remettre à jour.
+ */
 export function custodyParent(
   iso: string,
   custody: CustodySettings,
@@ -30,18 +36,32 @@ export function custodyParent(
   if (override) return override.parentId
   if (custody.mode === 'off') return null
 
-  const week = custodyWeekNumber(iso, custody.changeoverWeekday)
-  const other: ParentId = custody.evenWeekParent === 'me' ? 'other' : 'me'
-  return week % 2 === 0 ? custody.evenWeekParent : other
+  const weeks = Math.floor(daysBetween(custody.anchorDate, iso) / 7)
+  // `%` garde le signe en JS : on le corrige pour les dates antérieures.
+  const even = ((weeks % 2) + 2) % 2 === 0
+  return even ? custody.anchorParent : otherParent(custody.anchorParent)
+}
+
+/** L'accord saisi est-il dépassé à cette date ? */
+export function custodyEnded(iso: string, custody: CustodySettings): boolean {
+  return Boolean(custody.endDate) && iso > custody.endDate!
 }
 
 /** L'activité récurrente a-t-elle lieu à cette date ? */
-export function activityOccursOn(activity: Activity, iso: string): boolean {
+export function activityOccursOn(
+  activity: Activity,
+  iso: string,
+  custody: CustodySettings,
+  overrides: CustodyOverride[],
+): boolean {
   if (!activity.active) return false
   if (activity.weekday !== weekdayOf(iso)) return false
   if (activity.frequency === 'weekly') return true
-  const even = isoWeekNumber(startOfWeek(iso)) % 2 === 0
-  return activity.frequency === 'even' ? even : !even
+
+  // Une semaine sur deux : on suit le calendrier de garde.
+  const parent = custodyParent(iso, custody, overrides)
+  if (!parent) return false
+  return activity.frequency === 'week-me' ? parent === 'me' : parent === 'other'
 }
 
 export interface DayItem {
@@ -55,12 +75,13 @@ export interface DayItem {
   notes?: string
   driverId?: ParentId | null
   kind?: Activity['kind']
+  scope?: Activity['scope']
 }
 
 /** Tout ce qui est prévu à une date, trié par heure. */
 export function itemsForDay(data: AppData, iso: string): DayItem[] {
   const fromActivities: DayItem[] = data.activities
-    .filter((a) => activityOccursOn(a, iso))
+    .filter((a) => activityOccursOn(a, iso, data.custody, data.custodyOverrides))
     .map((a) => ({
       id: a.id,
       source: 'activity' as const,
@@ -72,6 +93,7 @@ export function itemsForDay(data: AppData, iso: string): DayItem[] {
       notes: a.notes,
       driverId: a.driverId,
       kind: a.kind,
+      scope: a.scope,
     }))
 
   const fromEvents: DayItem[] = data.events
@@ -105,6 +127,11 @@ export function upcoming(
     if (items.length) result.push({ date, items })
   }
   return result
+}
+
+export const ACTIVITY_SCOPE_LABEL: Record<Activity['scope'], string> = {
+  cours: 'Cours',
+  'hors-cours': 'Hors cours',
 }
 
 export const ACTIVITY_KIND_LABEL: Record<Activity['kind'], string> = {

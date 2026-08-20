@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store'
-import type { Activity, ParentId, Weekday } from '../types'
+import type { Activity, ActivityScope, ParentId, Weekday } from '../types'
 import { WEEKDAYS } from '../lib/dates'
 import { newId } from '../lib/storage'
 import { ACTIVITY_KIND_LABEL } from '../lib/schedule'
@@ -8,17 +8,28 @@ import { Field, Modal, Segment } from './ui'
 
 export default function ActivityForm({
   initial,
+  defaultScope,
+  defaultChildId,
   onClose,
 }: {
   initial?: Activity
+  defaultScope?: ActivityScope
+  defaultChildId?: string
   onClose: () => void
 }) {
   const { data, update, meName, otherName } = useStore()
   const isEdit = Boolean(initial)
 
-  const [childId, setChildId] = useState(initial?.childId ?? data.children[0]?.id ?? '')
+  const [childId, setChildId] = useState(
+    initial?.childId ?? defaultChildId ?? data.children[0]?.id ?? '',
+  )
   const [title, setTitle] = useState(initial?.title ?? '')
-  const [kind, setKind] = useState<Activity['kind']>(initial?.kind ?? 'sport')
+  const [scope, setScope] = useState<ActivityScope>(
+    initial?.scope ?? defaultScope ?? 'hors-cours',
+  )
+  const [kind, setKind] = useState<Activity['kind']>(
+    initial?.kind ?? (defaultScope === 'cours' ? 'ecole' : 'sport'),
+  )
   const [weekday, setWeekday] = useState<Weekday>(initial?.weekday ?? 2)
   const [start, setStart] = useState(initial?.start ?? '17:00')
   const [end, setEnd] = useState(initial?.end ?? '18:30')
@@ -38,6 +49,7 @@ export default function ActivityForm({
       id: initial?.id ?? newId(),
       childId,
       title: title.trim(),
+      scope,
       kind,
       weekday,
       start,
@@ -69,15 +81,42 @@ export default function ActivityForm({
 
   return (
     <Modal
-      title={isEdit ? `Modifier l'activité` : 'Nouvelle activité hebdomadaire'}
+      title={
+        isEdit
+          ? scope === 'cours'
+            ? 'Modifier le cours'
+            : `Modifier l'activité`
+          : 'Nouveau créneau hebdomadaire'
+      }
       onClose={onClose}
     >
-      <Field label="Nom de l'activité">
+      <Field
+        label="Type de créneau"
+        hint="Les cours forment l'emploi du temps scolaire ; le reste apparaît dans l'onglet « Activités hors cours »."
+      >
+        <Segment<ActivityScope>
+          value={scope}
+          onChange={(next) => {
+            setScope(next)
+            setKind(next === 'cours' ? 'ecole' : 'sport')
+          }}
+          options={[
+            { value: 'cours', label: 'Cours' },
+            { value: 'hors-cours', label: 'Hors cours' },
+          ]}
+        />
+      </Field>
+
+      <Field label={scope === 'cours' ? 'Matière ou intitulé' : "Nom de l'activité"}>
         <input
           type="text"
           value={title}
           autoFocus
-          placeholder="Ex. Basket, piano, soutien maths…"
+          placeholder={
+            scope === 'cours'
+              ? 'Ex. Cours, Mathématiques, Permanence…'
+              : 'Ex. Basket, piano, soutien maths…'
+          }
           onChange={(e) => setTitle(e.target.value)}
         />
       </Field>
@@ -128,14 +167,17 @@ export default function ActivityForm({
         </Field>
       </div>
 
-      <Field label="Fréquence">
+      <Field
+        label="Fréquence"
+        hint="Une semaine sur deux ? Choisissez chez quel parent le créneau a lieu."
+      >
         <Segment<Activity['frequency']>
           value={frequency}
           onChange={setFrequency}
           options={[
             { value: 'weekly', label: 'Chaque semaine' },
-            { value: 'even', label: 'Semaines paires' },
-            { value: 'odd', label: 'Semaines impaires' },
+            { value: 'week-me', label: `Semaines chez ${meName}` },
+            { value: 'week-other', label: `Semaines chez ${otherName}` },
           ]}
         />
       </Field>

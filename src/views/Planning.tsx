@@ -4,21 +4,34 @@ import type { OneOffEvent } from '../types'
 import {
   WEEKDAYS_SHORT,
   addDays,
+  formatFull,
   formatShort,
   isToday,
-  isoWeekNumber,
   parseISO,
-  startOfWeek,
   today,
+  weekdayOf,
 } from '../lib/dates'
-import { custodyParent, itemsForDay } from '../lib/schedule'
+import {
+  custodyEnded,
+  custodyParent,
+  custodyWeekStart,
+  itemsForDay,
+  type DayItem,
+} from '../lib/schedule'
 import { Dot, Empty } from '../components/ui'
 import EventForm from '../components/EventForm'
 
+/** Onglet actif : l'identifiant d'un enfant, ou la vue « hors cours ». */
+type PlanningTab = string
+
 export default function Planning() {
   const { data, update, childName, childColor, meName, otherName } = useStore()
-  const [anchor, setAnchor] = useState(() => startOfWeek(today()))
-  const [childFilter, setChildFilter] = useState<string>('all')
+  const [tab, setTab] = useState<PlanningTab>(
+    () => data.children[0]?.id ?? 'hors-cours',
+  )
+  const [anchor, setAnchor] = useState(() =>
+    custodyWeekStart(today(), data.custody),
+  )
   const [newEventDate, setNewEventDate] = useState<string | null>(null)
   const [editEvent, setEditEvent] = useState<OneOffEvent | null>(null)
 
@@ -27,9 +40,18 @@ export default function Planning() {
     [anchor],
   )
 
-  const monday = parseISO(anchor)
-  const sunday = parseISO(addDays(anchor, 6))
-  const rangeLabel = `${formatShort(anchor)} – ${formatShort(addDays(anchor, 6))} ${sunday.getFullYear()}`
+  const isScopeTab = tab === 'hors-cours'
+
+  /** Ne garder que ce que l'onglet courant doit montrer. */
+  function visibleItems(date: string): DayItem[] {
+    const items = itemsForDay(data, date)
+    if (isScopeTab) {
+      // Vue transversale : les activités hors cours des deux enfants,
+      // plus les rendez-vous ponctuels, qui ne sont jamais des cours.
+      return items.filter((it) => it.scope !== 'cours')
+    }
+    return items.filter((it) => it.childId === tab || it.childId === 'all')
+  }
 
   function toggleCustody(date: string) {
     if (data.custody.mode === 'off') return
@@ -44,13 +66,20 @@ export default function Planning() {
     }))
   }
 
+  const weekCustodian = custodyParent(anchor, data.custody, data.custodyOverrides)
+  const showEndWarning = custodyEnded(anchor, data.custody)
+  const lastDay = addDays(anchor, 6)
+  const rangeLabel = `${formatShort(anchor)} – ${formatShort(lastDay)} ${parseISO(lastDay).getFullYear()}`
+
   return (
     <>
       <div className="page-head">
         <div>
           <h1>Planning</h1>
           <div className="sub">
-            Semaine {isoWeekNumber(anchor)} · {monday.getFullYear()}
+            {weekCustodian
+              ? `Semaine chez ${weekCustodian === 'me' ? meName : otherName}`
+              : 'Emplois du temps de la semaine'}
           </div>
         </div>
         <button
@@ -58,6 +87,24 @@ export default function Planning() {
           onClick={() => setNewEventDate(today())}
         >
           + Événement
+        </button>
+      </div>
+
+      <div className="segment" style={{ marginBottom: 14 }}>
+        {data.children.map((c) => (
+          <button
+            key={c.id}
+            className={tab === c.id ? 'on' : ''}
+            onClick={() => setTab(c.id)}
+          >
+            {c.name}
+          </button>
+        ))}
+        <button
+          className={isScopeTab ? 'on' : ''}
+          onClick={() => setTab('hors-cours')}
+        >
+          Activités hors cours
         </button>
       </div>
 
@@ -71,34 +118,36 @@ export default function Planning() {
         </button>
       </div>
 
-      <div className="filters">
-        <select value={childFilter} onChange={(e) => setChildFilter(e.target.value)}>
-          <option value="all">Tous les enfants</option>
-          {data.children.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <button className="btn btn-sm" onClick={() => setAnchor(startOfWeek(today()))}>
+      <div className="row" style={{ marginBottom: 14 }}>
+        <button
+          className="btn btn-sm"
+          onClick={() => setAnchor(custodyWeekStart(today(), data.custody))}
+        >
           Cette semaine
         </button>
+        {isScopeTab && (
+          <span className="faint">Les deux enfants, cours exclus.</span>
+        )}
       </div>
 
+      {showEndWarning && (
+        <div className="callout">
+          ⚠️ L'alternance saisie s'arrêtait au{' '}
+          <strong>{formatFull(data.custody.endDate!)}</strong>. Elle continue à
+          s'afficher au même rythme, mais pensez à la mettre à jour dans les réglages.
+        </div>
+      )}
+
       <div className="week">
-        {days.map((date, i) => {
-          const items = itemsForDay(data, date).filter(
-            (it) =>
-              childFilter === 'all' ||
-              it.childId === childFilter ||
-              it.childId === 'all',
-          )
+        {days.map((date) => {
+          const items = visibleItems(date)
           const custodian = custodyParent(date, data.custody, data.custodyOverrides)
+          const overridden = data.custodyOverrides.some((o) => o.date === date)
           return (
             <div key={date} className={`day-col${isToday(date) ? ' today' : ''}`}>
               <div className="row" style={{ justifyContent: 'space-between' }}>
                 <div>
-                  <div className="dayname">{WEEKDAYS_SHORT[i]}</div>
+                  <div className="dayname">{WEEKDAYS_SHORT[weekdayOf(date)]}</div>
                   <div className="daynum">{formatShort(date)}</div>
                 </div>
                 <button
@@ -125,6 +174,7 @@ export default function Planning() {
                     }
                   />
                   {custodian === 'me' ? meName : otherName}
+                  {overridden && ' *'}
                 </button>
               )}
 
@@ -136,7 +186,7 @@ export default function Planning() {
                 items.map((it) => (
                   <div
                     key={`${it.source}-${it.id}`}
-                    className="slot"
+                    className={`slot${it.scope === 'cours' ? ' slot-cours' : ''}`}
                     style={{ borderLeftColor: childColor(it.childId) }}
                   >
                     <button
@@ -153,8 +203,11 @@ export default function Planning() {
                       </div>
                       <div className="n">{it.title}</div>
                       <div className="l">
-                        {childName(it.childId)}
-                        {it.location ? ` · ${it.location}` : ''}
+                        {isScopeTab ? `${childName(it.childId)} · ` : ''}
+                        {it.location ?? ''}
+                        {it.driverId
+                          ? `${it.location ? ' · ' : ''}${it.driverId === 'me' ? meName : otherName} emmène`
+                          : ''}
                       </div>
                     </button>
                   </div>
@@ -168,7 +221,7 @@ export default function Planning() {
       {data.activities.length === 0 && data.events.length === 0 && (
         <div style={{ marginTop: 14 }}>
           <Empty>
-            Le planning est vide. Commencez par ajouter les activités hebdomadaires dans
+            Le planning est vide. Commencez par saisir les cours et les activités dans
             l'onglet « Activités ».
           </Empty>
         </div>
@@ -177,7 +230,7 @@ export default function Planning() {
       {data.custody.mode !== 'off' && (
         <p className="faint" style={{ marginTop: 14 }}>
           Astuce : cliquez sur le nom d'un parent dans une journée pour inverser la garde
-          ce jour-là (vacances, échange ponctuel…).
+          ce jour-là (vacances, échange ponctuel…). Un astérisque signale une exception.
         </p>
       )}
 

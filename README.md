@@ -11,10 +11,45 @@ dépenses entre les deux parents.
 | Onglet | À quoi ça sert |
 | --- | --- |
 | **Accueil** | Ce qui se passe aujourd'hui, les 7 prochains jours, et le solde entre parents en un coup d'œil. |
-| **Planning** | La semaine des deux ados côte à côte, avec qui a la garde chaque jour. |
-| **Activités** | Les créneaux qui reviennent chaque semaine (basket, piano, soutien…) et les rendez-vous ponctuels. |
+| **Planning** | Trois onglets : l'emploi du temps de Maxime, celui de Mathis, et une vue des activités hors cours des deux enfants. |
+| **Activités** | Les créneaux qui reviennent chaque semaine — cours d'un côté, activités hors cours de l'autre — et les rendez-vous ponctuels. |
 | **Finances** | Chaque dépense, qui l'a payée, comment elle se partage, et le calcul automatique de qui doit combien à qui. |
 | **Réglages** | Les prénoms, les couleurs, le rythme de garde, les catégories, et la sauvegarde de vos données. |
+
+## Le planning
+
+Trois onglets, parce qu'on ne consulte pas un emploi du temps scolaire et un
+planning d'activités pour les mêmes raisons :
+
+- **Maxime** et **Mathis** — la semaine complète de l'enfant. Les cours forment
+  la trame de fond, en gris ; les activités et rendez-vous ressortent par-dessus.
+- **Activités hors cours** — les deux enfants ensemble, cours exclus. C'est la
+  vue qui sert à repérer les conflits de trajets : deux activités à la même
+  heure, ou deux enfants à emmener en même temps.
+
+La semaine affichée va du **samedi au vendredi**, pour coïncider avec le rythme
+de garde : chaque colonne de sept jours correspond à une semaine chez un seul
+parent.
+
+## La garde alternée
+
+Elle se règle par une **date de départ** plutôt que par des numéros de semaine —
+c'est ce qu'on a en tête quand on s'accorde avec l'autre parent. Le réglage
+actuel : à partir du **samedi 29 août 2026**, une semaine chez Maman, une semaine
+chez Papa, jusqu'au **vendredi 9 juillet 2027**.
+
+Le jour de la date de départ devient le jour de bascule. Passé la date de fin,
+l'alternance continue à s'afficher au même rythme, avec un rappel invitant à la
+mettre à jour — rien ne disparaît jamais du planning.
+
+Deux ajustements possibles :
+
+- Un **échange ponctuel** (vacances, dépannage) : cliquez sur le nom du parent
+  dans la journée concernée du planning, la garde s'inverse pour ce jour-là et
+  un astérisque le signale.
+- Une activité **une semaine sur deux** : au lieu de « semaines paires », vous
+  choisissez « semaines chez Maman » ou « semaines chez Papa ». C'est plus
+  parlant, et cela reste juste même si l'alternance est décalée.
 
 ## Comment le solde est calculé
 

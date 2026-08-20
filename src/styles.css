@@ -490,6 +490,15 @@ textarea { min-height: 64px; resize: vertical; }
 .slot .l { color: var(--text-faint); font-size: 0.75rem; }
 .slot button { border: 0; background: transparent; padding: 0; text-align: left; width: 100%; color: inherit; }
 
+/* Les cours forment la trame de fond de la journée : on les pose en aplat
+   discret pour que les activités et rendez-vous ressortent par-dessus. */
+.slot-cours {
+  background: var(--surface-2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding-right: 6px;
+}
+.slot-cours .n { color: var(--text-faint); }
+
 /* ------------------------------------------------------------------ */
 /* Filtres, tableaux                                                   */
 /* ------------------------------------------------------------------ */

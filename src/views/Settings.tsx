@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { useStore } from '../store'
-import type { ParentId, Weekday } from '../types'
-import { WEEKDAYS } from '../lib/dates'
+import type { ParentId } from '../types'
+import { addDays, formatFull, weekdayOf, WEEKDAYS } from '../lib/dates'
+import { custodyParent, otherParent } from '../lib/schedule'
 import {
   emptyData,
   exportData,
@@ -9,6 +10,7 @@ import {
   parseImported,
 } from '../lib/storage'
 import { demoData } from '../lib/demo'
+import { today as todayFn } from '../lib/dates'
 import { Field, Segment } from '../components/ui'
 
 const CHILD_COLORS = ['#e11d48', '#f59e0b', '#0ea5e9', '#8b5cf6', '#10b981', '#ec4899']
@@ -18,6 +20,12 @@ export default function Settings() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [newCategory, setNewCategory] = useState('')
   const [message, setMessage] = useState<string | null>(null)
+
+  const currentCustodian = custodyParent(
+    todayFn(),
+    data.custody,
+    data.custodyOverrides,
+  )
 
   function flash(text: string) {
     setMessage(text)
@@ -191,38 +199,48 @@ export default function Settings() {
 
         {data.custody.mode === 'alternate-weekly' && (
           <>
-            <Field
-              label="Jour de bascule"
-              hint="Le jour où les enfants passent d'un parent à l'autre."
-            >
-              <select
-                value={data.custody.changeoverWeekday}
-                onChange={(e) =>
-                  update((d) => ({
-                    ...d,
-                    custody: {
-                      ...d.custody,
-                      changeoverWeekday: Number(e.target.value) as Weekday,
-                    },
-                  }))
-                }
+            <div className="field-row">
+              <Field
+                label="L'alternance démarre le"
+                hint={`Le ${WEEKDAYS[weekdayOf(data.custody.anchorDate)].toLowerCase()} devient le jour de bascule.`}
               >
-                {WEEKDAYS.map((w, i) => (
-                  <option key={w} value={i}>
-                    {w}
-                  </option>
-                ))}
-              </select>
-            </Field>
+                <input
+                  type="date"
+                  value={data.custody.anchorDate}
+                  onChange={(e) =>
+                    e.target.value &&
+                    update((d) => ({
+                      ...d,
+                      custody: { ...d.custody, anchorDate: e.target.value },
+                    }))
+                  }
+                />
+              </Field>
+              <Field
+                label="Jusqu'au"
+                hint="Fin de l'accord en cours. Un rappel s'affiche ensuite."
+              >
+                <input
+                  type="date"
+                  value={data.custody.endDate ?? ''}
+                  onChange={(e) =>
+                    update((d) => ({
+                      ...d,
+                      custody: { ...d.custody, endDate: e.target.value || undefined },
+                    }))
+                  }
+                />
+              </Field>
+            </div>
 
             <Field
-              label="Semaines paires"
-              hint="Si l'alternance est décalée, changez ce réglage : tout le calendrier se recale."
+              label="Cette première semaine, les enfants sont chez"
+              hint="Si tout le calendrier est décalé d'une semaine, changez ce réglage."
             >
               <Segment<ParentId>
-                value={data.custody.evenWeekParent}
-                onChange={(evenWeekParent) =>
-                  update((d) => ({ ...d, custody: { ...d.custody, evenWeekParent } }))
+                value={data.custody.anchorParent}
+                onChange={(anchorParent) =>
+                  update((d) => ({ ...d, custody: { ...d.custody, anchorParent } }))
                 }
                 options={[
                   { value: 'me', label: meName },
@@ -230,6 +248,31 @@ export default function Settings() {
                 ]}
               />
             </Field>
+
+            <div className="callout">
+              Semaine du <strong>{formatFull(data.custody.anchorDate)}</strong> chez{' '}
+              <strong>
+                {data.custody.anchorParent === 'me' ? meName : otherName}
+              </strong>
+              , puis semaine du{' '}
+              <strong>{formatFull(addDays(data.custody.anchorDate, 7))}</strong> chez{' '}
+              <strong>
+                {otherParent(data.custody.anchorParent) === 'me' ? meName : otherName}
+              </strong>
+              , et ainsi de suite
+              {data.custody.endDate
+                ? ` jusqu'au ${formatFull(data.custody.endDate)}`
+                : ''}
+              . Aujourd'hui, les enfants sont chez{' '}
+              <strong>
+                {currentCustodian === 'me'
+                  ? meName
+                  : currentCustodian === 'other'
+                    ? otherName
+                    : '—'}
+              </strong>
+              .
+            </div>
 
             {data.custodyOverrides.length > 0 && (
               <div className="row" style={{ marginTop: 10 }}>
@@ -365,7 +408,7 @@ export default function Settings() {
       </div>
 
       <p className="faint center" style={{ marginTop: 20 }}>
-        CoparentAI · version 1.0
+        CoparentAI · version 1.1
       </p>
     </>
   )

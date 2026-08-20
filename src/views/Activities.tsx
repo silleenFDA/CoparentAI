@@ -1,44 +1,62 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
-import type { Activity, OneOffEvent } from '../types'
+import type { Activity, ActivityScope, OneOffEvent } from '../types'
 import { WEEKDAYS, formatLong, today } from '../lib/dates'
 import { ACTIVITY_KIND_ICON } from '../lib/schedule'
 import { Dot, Empty } from '../components/ui'
 import ActivityForm from '../components/ActivityForm'
 import EventForm from '../components/EventForm'
 
+type Tab = ActivityScope | 'ponctuels'
+
 export default function Activities() {
   const { data, childName, childColor, meName, otherName } = useStore()
-  const [tab, setTab] = useState<'weekly' | 'oneoff'>('weekly')
-  const [newActivity, setNewActivity] = useState(false)
+  const [tab, setTab] = useState<Tab>('cours')
+  const [childFilter, setChildFilter] = useState('all')
+  const [newActivity, setNewActivity] = useState<ActivityScope | null>(null)
   const [editActivity, setEditActivity] = useState<Activity | null>(null)
   const [newEvent, setNewEvent] = useState(false)
   const [editEvent, setEditEvent] = useState<OneOffEvent | null>(null)
 
+  const counts = useMemo(
+    () => ({
+      cours: data.activities.filter((a) => a.scope === 'cours').length,
+      'hors-cours': data.activities.filter((a) => a.scope === 'hors-cours').length,
+    }),
+    [data.activities],
+  )
+
+  const matchesChild = (id: string) => childFilter === 'all' || id === childFilter
+
   const byDay = useMemo(() => {
-    const groups: { weekday: number; items: Activity[] }[] = WEEKDAYS.map((_, i) => ({
-      weekday: i,
-      items: [],
-    }))
-    for (const a of data.activities) groups[a.weekday].items.push(a)
+    if (tab === 'ponctuels') return []
+    const groups = WEEKDAYS.map((_, i) => ({ weekday: i, items: [] as Activity[] }))
+    for (const a of data.activities) {
+      if (a.scope !== tab || !matchesChild(a.childId)) continue
+      groups[a.weekday].items.push(a)
+    }
     groups.forEach((g) => g.items.sort((a, b) => a.start.localeCompare(b.start)))
     return groups.filter((g) => g.items.length > 0)
-  }, [data.activities])
+  }, [data.activities, tab, childFilter])
 
-  const futureEvents = useMemo(() => {
-    const now = today()
-    return [...data.events]
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .filter((e) => e.date >= now)
-  }, [data.events])
+  const events = useMemo(
+    () =>
+      data.events.filter((e) => matchesChild(e.childId) || e.childId === 'all'),
+    [data.events, childFilter],
+  )
+  const now = today()
+  const futureEvents = [...events]
+    .filter((e) => e.date >= now)
+    .sort((a, b) => a.date.localeCompare(b.date))
+  const pastEvents = [...events]
+    .filter((e) => e.date < now)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 10)
 
-  const pastEvents = useMemo(() => {
-    const now = today()
-    return [...data.events]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .filter((e) => e.date < now)
-      .slice(0, 10)
-  }, [data.events])
+  function frequencyLabel(a: Activity): string {
+    if (a.frequency === 'weekly') return ''
+    return ` · semaines chez ${a.frequency === 'week-me' ? meName : otherName}`
+  }
 
   return (
     <>
@@ -46,37 +64,58 @@ export default function Activities() {
         <div>
           <h1>Activités</h1>
           <div className="sub">
-            Les créneaux qui reviennent chaque semaine, et les rendez-vous ponctuels.
+            Saisissez ici les créneaux : ils remplissent le planning automatiquement.
           </div>
         </div>
         <button
           className="btn btn-sm btn-primary"
-          onClick={() => (tab === 'weekly' ? setNewActivity(true) : setNewEvent(true))}
+          onClick={() =>
+            tab === 'ponctuels' ? setNewEvent(true) : setNewActivity(tab)
+          }
         >
-          {tab === 'weekly' ? '+ Activité' : '+ Événement'}
+          {tab === 'cours'
+            ? '+ Cours'
+            : tab === 'hors-cours'
+              ? '+ Activité'
+              : '+ Événement'}
         </button>
       </div>
 
-      <div className="segment" style={{ marginBottom: 16 }}>
-        <button
-          className={tab === 'weekly' ? 'on' : ''}
-          onClick={() => setTab('weekly')}
-        >
-          Chaque semaine ({data.activities.length})
+      <div className="segment" style={{ marginBottom: 14 }}>
+        <button className={tab === 'cours' ? 'on' : ''} onClick={() => setTab('cours')}>
+          Cours ({counts.cours})
         </button>
         <button
-          className={tab === 'oneoff' ? 'on' : ''}
-          onClick={() => setTab('oneoff')}
+          className={tab === 'hors-cours' ? 'on' : ''}
+          onClick={() => setTab('hors-cours')}
+        >
+          Hors cours ({counts['hors-cours']})
+        </button>
+        <button
+          className={tab === 'ponctuels' ? 'on' : ''}
+          onClick={() => setTab('ponctuels')}
         >
           Ponctuels ({data.events.length})
         </button>
       </div>
 
-      {tab === 'weekly' &&
+      <div className="filters">
+        <select value={childFilter} onChange={(e) => setChildFilter(e.target.value)}>
+          <option value="all">Tous les enfants</option>
+          {data.children.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {tab !== 'ponctuels' &&
         (byDay.length === 0 ? (
           <Empty>
-            Aucune activité enregistrée. Ajoutez les cours, sports et trajets qui
-            reviennent chaque semaine : ils apparaîtront automatiquement dans le planning.
+            {tab === 'cours'
+              ? "Aucun cours enregistré. Saisissez les blocs de l'emploi du temps scolaire (matinée, après-midi, ou matière par matière)."
+              : 'Aucune activité enregistrée. Ajoutez les sports, cours de musique et trajets qui reviennent chaque semaine.'}
           </Empty>
         ) : (
           byDay.map((group) => (
@@ -89,7 +128,11 @@ export default function Activities() {
                   <button
                     key={a.id}
                     className="item"
-                    style={{ textAlign: 'left', cursor: 'pointer', opacity: a.active ? 1 : 0.5 }}
+                    style={{
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      opacity: a.active ? 1 : 0.5,
+                    }}
                     onClick={() => setEditActivity(a)}
                   >
                     <span
@@ -105,8 +148,7 @@ export default function Activities() {
                       <div className="meta">
                         {childName(a.childId)} · {a.start}–{a.end}
                         {a.location ? ` · ${a.location}` : ''}
-                        {a.frequency !== 'weekly' &&
-                          ` · semaines ${a.frequency === 'even' ? 'paires' : 'impaires'}`}
+                        {frequencyLabel(a)}
                         {a.driverId
                           ? ` · ${a.driverId === 'me' ? meName : otherName} emmène`
                           : ''}
@@ -120,7 +162,7 @@ export default function Activities() {
           ))
         ))}
 
-      {tab === 'oneoff' && (
+      {tab === 'ponctuels' && (
         <>
           <div className="card">
             <div className="card-title">
@@ -181,7 +223,13 @@ export default function Activities() {
         </>
       )}
 
-      {newActivity && <ActivityForm onClose={() => setNewActivity(false)} />}
+      {newActivity && (
+        <ActivityForm
+          defaultScope={newActivity}
+          defaultChildId={childFilter === 'all' ? undefined : childFilter}
+          onClose={() => setNewActivity(null)}
+        />
+      )}
       {editActivity && (
         <ActivityForm initial={editActivity} onClose={() => setEditActivity(null)} />
       )}

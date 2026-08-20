@@ -51,6 +51,20 @@ export function weekDates(iso: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(monday, i))
 }
 
+/**
+ * Numéro du jour depuis une origine fixe. Passer par UTC évite qu'un
+ * changement d'heure fasse dériver un calcul d'écart d'une journée.
+ */
+export function dayNumber(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number)
+  return Math.floor(Date.UTC(y, m - 1, d) / 86400000)
+}
+
+/** Nombre de jours de `from` à `to` (négatif si `to` est avant). */
+export function daysBetween(from: string, to: string): number {
+  return dayNumber(to) - dayNumber(from)
+}
+
 /** Numéro de semaine ISO (1 à 53). */
 export function isoWeekNumber(iso: string): number {
   const d = parseISO(iso)
@@ -72,6 +86,12 @@ export function formatLong(iso: string): string {
 export function formatShort(iso: string): string {
   const d = parseISO(iso)
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+/** "2026-08-29" -> "samedi 29 août 2026" */
+export function formatFull(iso: string): string {
+  const d = parseISO(iso)
+  return `${WEEKDAYS[weekdayOf(iso)].toLowerCase()} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
 }
 
 export function formatMonth(monthKey: string): string {

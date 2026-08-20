@@ -22,11 +22,21 @@ export interface Child {
   grade?: string
 }
 
+/** Cours de l'emploi du temps scolaire, ou activité en dehors des cours. */
+export type ActivityScope = 'cours' | 'hors-cours'
+
+/**
+ * Une semaine sur deux, l'alternance suit le calendrier de garde :
+ * « les semaines où les enfants sont chez tel parent ».
+ */
+export type Frequency = 'weekly' | 'week-me' | 'week-other'
+
 /** Créneau qui revient chaque semaine : cours, sport, musique, trajet... */
 export interface Activity {
   id: ID
   childId: ID
   title: string
+  scope: ActivityScope
   kind: 'ecole' | 'sport' | 'musique' | 'sante' | 'autre'
   weekday: Weekday
   start: string // "17:30"
@@ -34,8 +44,7 @@ export interface Activity {
   location?: string
   /** Parent qui emmène / récupère, si c'est toujours le même. */
   driverId?: ParentId | null
-  /** toutes les semaines, ou une semaine sur deux */
-  frequency: 'weekly' | 'even' | 'odd'
+  frequency: Frequency
   notes?: string
   active: boolean
 }
@@ -52,12 +61,19 @@ export interface OneOffEvent {
   notes?: string
 }
 
+/**
+ * L'alternance est définie par un point de départ daté plutôt que par des
+ * numéros de semaine : c'est ce que les parents ont réellement en tête
+ * (« à partir du samedi 29 août, une semaine chacun »).
+ */
 export interface CustodySettings {
   mode: 'alternate-weekly' | 'off'
-  /** Parent qui a les enfants les semaines paires (numéro de semaine ISO). */
-  evenWeekParent: ParentId
-  /** Jour de la bascule d'une semaine à l'autre (souvent le vendredi). */
-  changeoverWeekday: Weekday
+  /** Premier jour de la première semaine de référence (donne le jour de bascule). */
+  anchorDate: string
+  /** Parent qui a les enfants pendant cette semaine de référence. */
+  anchorParent: ParentId
+  /** Fin de l'accord en cours. L'alternance continue au-delà, avec un rappel. */
+  endDate?: string
 }
 
 /** Exception ponctuelle au calendrier de garde. */
