@@ -109,8 +109,8 @@ export default function ActivityForm({
               if (next === 'ponctuel') onSwitchToOneOff({ title, childId })
             }}
             options={[
-              { value: 'hebdo', label: 'Chaque semaine' },
               { value: 'ponctuel', label: 'Une seule fois' },
+              { value: 'hebdo', label: 'Chaque semaine' },
             ]}
           />
         </Field>

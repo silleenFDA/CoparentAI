@@ -80,8 +80,8 @@ export default function EventForm({
               if (next === 'hebdo') onSwitchToWeekly({ title, childId })
             }}
             options={[
-              { value: 'hebdo', label: 'Chaque semaine' },
               { value: 'ponctuel', label: 'Une seule fois' },
+              { value: 'hebdo', label: 'Chaque semaine' },
             ]}
           />
         </Field>

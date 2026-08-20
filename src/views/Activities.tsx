@@ -12,7 +12,7 @@ type Tab = 'hebdo' | 'ponctuels'
 
 export default function Activities() {
   const { data, childName, childColor, meName, otherName } = useStore()
-  const [tab, setTab] = useState<Tab>('hebdo')
+  const [tab, setTab] = useState<Tab>('ponctuels')
   const [childFilter, setChildFilter] = useState('all')
   const [editActivity, setEditActivity] = useState<Activity | null>(null)
   const [editEvent, setEditEvent] = useState<OneOffEvent | null>(null)
@@ -87,14 +87,14 @@ export default function Activities() {
       </div>
 
       <div className="segment" style={{ marginBottom: 14 }}>
-        <button className={tab === 'hebdo' ? 'on' : ''} onClick={() => setTab('hebdo')}>
-          Chaque semaine ({horsCours.length})
-        </button>
         <button
           className={tab === 'ponctuels' ? 'on' : ''}
           onClick={() => setTab('ponctuels')}
         >
           Rendez-vous ({data.events.length})
+        </button>
+        <button className={tab === 'hebdo' ? 'on' : ''} onClick={() => setTab('hebdo')}>
+          Chaque semaine ({horsCours.length})
         </button>
       </div>
 
