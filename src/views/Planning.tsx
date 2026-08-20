@@ -38,6 +38,7 @@ export default function Planning() {
   const [editEvent, setEditEvent] = useState<OneOffEvent | null>(null)
   const [importing, setImporting] = useState(false)
   const [editActivity, setEditActivity] = useState<Activity | null>(null)
+  const [newCourse, setNewCourse] = useState(false)
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(anchor, i)),
@@ -88,9 +89,14 @@ export default function Planning() {
         </div>
         <div className="row">
           {!isScopeTab && (
-            <button className="btn btn-sm" onClick={() => setImporting(true)}>
-              ⬆ Importer un .ics
-            </button>
+            <>
+              <button className="btn btn-sm" onClick={() => setImporting(true)}>
+                ⬆ Importer un .ics
+              </button>
+              <button className="btn btn-sm" onClick={() => setNewCourse(true)}>
+                + Cours
+              </button>
+            </>
           )}
           <button
             className="btn btn-sm btn-primary"
@@ -265,6 +271,13 @@ export default function Planning() {
       )}
       {editActivity && (
         <ActivityForm initial={editActivity} onClose={() => setEditActivity(null)} />
+      )}
+      {newCourse && (
+        <ActivityForm
+          defaultScope="cours"
+          defaultChildId={isScopeTab ? undefined : tab}
+          onClose={() => setNewCourse(false)}
+        />
       )}
     </>
   )

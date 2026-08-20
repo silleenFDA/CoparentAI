@@ -1,28 +1,26 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
-import type { Activity, ActivityScope, OneOffEvent } from '../types'
+import type { Activity, OneOffEvent } from '../types'
 import { WEEKDAYS, formatLong, today } from '../lib/dates'
 import { ACTIVITY_KIND_ICON } from '../lib/schedule'
 import { Dot, Empty } from '../components/ui'
 import ActivityForm from '../components/ActivityForm'
 import EventForm from '../components/EventForm'
 
-type Tab = ActivityScope | 'ponctuels'
+/** Cette vue ne traite que ce qui sort de l'emploi du temps scolaire. */
+type Tab = 'hebdo' | 'ponctuels'
 
 export default function Activities() {
   const { data, childName, childColor, meName, otherName } = useStore()
-  const [tab, setTab] = useState<Tab>('cours')
+  const [tab, setTab] = useState<Tab>('hebdo')
   const [childFilter, setChildFilter] = useState('all')
-  const [newActivity, setNewActivity] = useState<ActivityScope | null>(null)
+  const [newActivity, setNewActivity] = useState<'hors-cours' | null>(null)
   const [editActivity, setEditActivity] = useState<Activity | null>(null)
   const [newEvent, setNewEvent] = useState(false)
   const [editEvent, setEditEvent] = useState<OneOffEvent | null>(null)
 
-  const counts = useMemo(
-    () => ({
-      cours: data.activities.filter((a) => a.scope === 'cours').length,
-      'hors-cours': data.activities.filter((a) => a.scope === 'hors-cours').length,
-    }),
+  const horsCours = useMemo(
+    () => data.activities.filter((a) => a.scope === 'hors-cours'),
     [data.activities],
   )
 
@@ -31,13 +29,13 @@ export default function Activities() {
   const byDay = useMemo(() => {
     if (tab === 'ponctuels') return []
     const groups = WEEKDAYS.map((_, i) => ({ weekday: i, items: [] as Activity[] }))
-    for (const a of data.activities) {
-      if (a.scope !== tab || !matchesChild(a.childId)) continue
+    for (const a of horsCours) {
+      if (!matchesChild(a.childId)) continue
       groups[a.weekday].items.push(a)
     }
     groups.forEach((g) => g.items.sort((a, b) => a.start.localeCompare(b.start)))
     return groups.filter((g) => g.items.length > 0)
-  }, [data.activities, tab, childFilter])
+  }, [horsCours, tab, childFilter])
 
   const events = useMemo(
     () =>
@@ -64,39 +62,29 @@ export default function Activities() {
         <div>
           <h1>Activités</h1>
           <div className="sub">
-            Saisissez ici les créneaux : ils remplissent l'emploi du temps
-            automatiquement.
+            Tout ce qui ne relève pas de l'emploi du temps scolaire : sport, musique,
+            rendez-vous médicaux, compétitions…
           </div>
         </div>
         <button
           className="btn btn-sm btn-primary"
           onClick={() =>
-            tab === 'ponctuels' ? setNewEvent(true) : setNewActivity(tab)
+            tab === 'ponctuels' ? setNewEvent(true) : setNewActivity('hors-cours')
           }
         >
-          {tab === 'cours'
-            ? '+ Cours'
-            : tab === 'hors-cours'
-              ? '+ Activité'
-              : '+ Événement'}
+          {tab === 'hebdo' ? '+ Activité' : '+ Rendez-vous'}
         </button>
       </div>
 
       <div className="segment" style={{ marginBottom: 14 }}>
-        <button className={tab === 'cours' ? 'on' : ''} onClick={() => setTab('cours')}>
-          Cours ({counts.cours})
-        </button>
-        <button
-          className={tab === 'hors-cours' ? 'on' : ''}
-          onClick={() => setTab('hors-cours')}
-        >
-          Hors cours ({counts['hors-cours']})
+        <button className={tab === 'hebdo' ? 'on' : ''} onClick={() => setTab('hebdo')}>
+          Chaque semaine ({horsCours.length})
         </button>
         <button
           className={tab === 'ponctuels' ? 'on' : ''}
           onClick={() => setTab('ponctuels')}
         >
-          Ponctuels ({data.events.length})
+          Rendez-vous ({data.events.length})
         </button>
       </div>
 
@@ -114,9 +102,9 @@ export default function Activities() {
       {tab !== 'ponctuels' &&
         (byDay.length === 0 ? (
           <Empty>
-            {tab === 'cours'
-              ? "Aucun cours enregistré. Le plus rapide : les importer depuis Pronote ou École Directe, avec le bouton « Importer un .ics » de l'onglet Emploi du temps."
-              : 'Aucune activité enregistrée. Ajoutez les sports, cours de musique et trajets qui reviennent chaque semaine.'}
+            Aucune activité enregistrée. Ajoutez ici les sports, cours de musique et
+            trajets qui reviennent chaque semaine. Les cours du collège et du lycée,
+            eux, se gèrent dans l'onglet Emploi du temps.
           </Empty>
         ) : (
           byDay.map((group) => (
@@ -170,7 +158,10 @@ export default function Activities() {
               <h2>À venir</h2>
             </div>
             {futureEvents.length === 0 ? (
-              <Empty>Aucun rendez-vous à venir.</Empty>
+              <Empty>
+                Aucun rendez-vous à venir. Médecin, orthodontiste, compétition,
+                conseil de classe…
+              </Empty>
             ) : (
               <div className="list">
                 {futureEvents.map((e) => (

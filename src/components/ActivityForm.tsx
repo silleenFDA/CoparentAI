@@ -92,7 +92,7 @@ export default function ActivityForm({
     >
       <Field
         label="Type de créneau"
-        hint="Les cours forment l'emploi du temps scolaire ; le reste apparaît dans l'onglet « Activités hors cours »."
+        hint="Un cours reste dans l'onglet Emploi du temps ; tout le reste — sport, musique, trajets — se retrouve dans l'onglet Activités."
       >
         <Segment<ActivityScope>
           value={scope}

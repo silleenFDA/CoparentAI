@@ -12,7 +12,7 @@ dépenses entre les deux parents.
 | --- | --- |
 | **Accueil** | Ce qui se passe aujourd'hui, les 7 prochains jours, et le solde entre parents en un coup d'œil. |
 | **Emploi du temps** | Trois onglets : l'emploi du temps de Maxime, celui de Mathis, et une vue des activités hors cours des deux enfants. |
-| **Activités** | Les créneaux qui reviennent chaque semaine — cours d'un côté, activités hors cours de l'autre — et les rendez-vous ponctuels. |
+| **Activités** | Tout ce qui ne relève pas de l'emploi du temps scolaire : sport, musique, rendez-vous médicaux, compétitions. |
 | **Finances** | Chaque dépense, qui l'a payée, comment elle se partage, et le calcul automatique de qui doit combien à qui. |
 | **Réglages** | Les prénoms, les couleurs, le rythme de garde, les catégories, et la sauvegarde de vos données. |
 
@@ -30,6 +30,23 @@ planning d'activités pour les mêmes raisons :
 La semaine affichée va du **samedi au vendredi**, pour coïncider avec le rythme
 de garde : chaque colonne de sept jours correspond à une semaine chez un seul
 parent.
+
+## Qui gère quoi
+
+La règle est simple, et c'est elle qui évite que les deux écrans se marchent
+dessus :
+
+- **Emploi du temps** — le scolaire, et la semaine telle qu'elle se déroule. Les
+  cours s'y importent, s'y ajoutent à la main, et **tout créneau s'y modifie d'un
+  clic**, activités hors cours et rendez-vous compris. C'est l'écran de
+  consultation, mais rien n'y est en lecture seule.
+- **Activités** — tout le reste, saisi à la main : les créneaux hebdomadaires
+  (basket, piano, orthophoniste) et les rendez-vous datés (médecin, compétition,
+  conseil de classe). Un cours ne s'y trouve jamais.
+
+Les activités hors cours apparaissent donc aux deux endroits, mais pour deux
+usages différents : dans la semaine pour savoir *quand*, dans la liste pour
+revoir *ce qui revient* et le corriger en bloc.
 
 ## Importer l'emploi du temps scolaire
 
