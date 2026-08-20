@@ -59,7 +59,8 @@ L'application se publie toute seule via GitHub Pages :
 
 1. Sur GitHub, allez dans **Settings → Pages**.
 2. Dans « Build and deployment », choisissez la source **GitHub Actions**.
-3. Dès qu'une modification arrive sur la branche `main`, le site se reconstruit
+3. Dès qu'une modification arrive sur la branche `main` (ou sur la branche de
+   développement `claude/coparent-ai-family-app-7jnnk8`), le site se reconstruit
    automatiquement.
 
 L'adresse sera : `https://silleenfda.github.io/CoparentAI/`

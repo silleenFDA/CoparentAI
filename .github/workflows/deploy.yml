@@ -4,7 +4,9 @@ name: Publier l'application
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - claude/coparent-ai-family-app-7jnnk8
   workflow_dispatch:
 
 permissions:
