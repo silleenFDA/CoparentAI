@@ -3,17 +3,10 @@ import { useStore } from '../store'
 import type { ParentId } from '../types'
 import { addDays, formatFull, weekdayOf, WEEKDAYS } from '../lib/dates'
 import { custodyParent, otherParent } from '../lib/schedule'
-import {
-  emptyData,
-  exportData,
-  newId,
-  parseImported,
-} from '../lib/storage'
+import { emptyData, exportData, parseImported } from '../lib/storage'
 import { demoData } from '../lib/demo'
 import { today as todayFn } from '../lib/dates'
 import { Field, Segment } from '../components/ui'
-
-const CHILD_COLORS = ['#e11d48', '#f59e0b', '#0ea5e9', '#8b5cf6', '#10b981', '#ec4899']
 
 export default function Settings() {
   const { data, update, replace, meName, otherName } = useStore()
@@ -104,25 +97,12 @@ export default function Settings() {
       <div className="card">
         <div className="card-title">
           <h2>Les enfants</h2>
-          <button
-            className="btn btn-sm"
-            onClick={() =>
-              update((d) => ({
-                ...d,
-                children: [
-                  ...d.children,
-                  {
-                    id: newId(),
-                    name: `Enfant ${d.children.length + 1}`,
-                    color: CHILD_COLORS[d.children.length % CHILD_COLORS.length],
-                  },
-                ],
-              }))
-            }
-          >
-            + Ajouter
-          </button>
         </div>
+
+        <p className="faint" style={{ marginTop: -4, marginBottom: 12 }}>
+          Modifiez le prénom ou la couleur ; la couleur sert de repère dans tout
+          le planning.
+        </p>
 
         {data.children.map((c) => (
           <div key={c.id} className="item" style={{ marginBottom: 8 }}>
@@ -153,29 +133,6 @@ export default function Settings() {
                 }
               />
             </div>
-            <button
-              className="icon-btn"
-              title="Supprimer"
-              onClick={() => {
-                if (data.children.length <= 1) {
-                  alert('Il faut garder au moins un enfant.')
-                  return
-                }
-                if (
-                  !confirm(
-                    `Supprimer ${c.name} ? Ses activités seront également supprimées.`,
-                  )
-                )
-                  return
-                update((d) => ({
-                  ...d,
-                  children: d.children.filter((x) => x.id !== c.id),
-                  activities: d.activities.filter((a) => a.childId !== c.id),
-                }))
-              }}
-            >
-              🗑
-            </button>
           </div>
         ))}
       </div>
