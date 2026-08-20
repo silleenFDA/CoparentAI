@@ -34,6 +34,16 @@ export default function Dossier() {
   const [newNote, setNewNote] = useState(false)
   const [editNote, setEditNote] = useState<Note | null>(null)
   const [ouverture, setOuverture] = useState<string | null>(null)
+  const [depliees, setDepliees] = useState<Set<string>>(new Set())
+
+  function basculer(id: string) {
+    setDepliees((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const documents = useMemo(
     () =>
@@ -183,42 +193,54 @@ export default function Dossier() {
             </Empty>
           ) : (
             <div className="list">
-              {notes.map((note) => (
-                <button
-                  key={note.id}
-                  className="item"
-                  style={{
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    alignItems: 'flex-start',
-                  }}
-                  onClick={() => setEditNote(note)}
-                >
-                  <Dot color={childColor(note.childId)} />
-                  <div className="body">
-                    <div className="title">
-                      {NOTE_ICONS[note.category]} {note.title}
-                    </div>
-                    <div className="meta">
-                      {formatLong(note.date)} · {NOTE_CATEGORIES[note.category]} ·{' '}
-                      {childName(note.childId)}
-                    </div>
-                    {note.body && (
-                      <div
-                        className="muted"
-                        style={{
-                          marginTop: 6,
-                          fontSize: '0.88rem',
-                          whiteSpace: 'pre-wrap',
-                        }}
-                      >
-                        {note.body}
+              {notes.map((note) => {
+                const depliee = depliees.has(note.id)
+                // Un aperçu suffit tant que la note tient en quelques lignes.
+                const longue =
+                  note.body.length > 160 || note.body.split('\n').length > 3
+                return (
+                  <div
+                    key={note.id}
+                    className="item"
+                    style={{ alignItems: 'flex-start' }}
+                  >
+                    <Dot color={childColor(note.childId)} />
+                    <div className="body">
+                      <div className="title">
+                        {NOTE_ICONS[note.category]} {note.title}
                       </div>
-                    )}
+                      <div className="meta">
+                        {formatLong(note.date)} · {NOTE_CATEGORIES[note.category]} ·{' '}
+                        {childName(note.childId)}
+                      </div>
+                      {note.body && (
+                        <>
+                          <div
+                            className={`note-preview${longue && !depliee ? ' clamped' : ''}`}
+                          >
+                            {note.body}
+                          </div>
+                          {longue && (
+                            <button
+                              className="note-more"
+                              onClick={() => basculer(note.id)}
+                            >
+                              {depliee ? 'Voir moins' : 'Voir plus'}
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <button
+                      className="icon-btn"
+                      title="Modifier"
+                      onClick={() => setEditNote(note)}
+                    >
+                      ✎
+                    </button>
                   </div>
-                  <span className="icon-btn">✎</span>
-                </button>
-              ))}
+                )
+              })}
             </div>
           )}
         </>

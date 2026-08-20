@@ -318,6 +318,20 @@ input:focus, select:focus, textarea:focus {
 textarea { min-height: 64px; resize: vertical; }
 
 .field-row { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+/* Un élément de grille refuse par défaut de passer sous sa largeur minimale.
+   Sans ceci, un champ date — plus large sur iOS — déborde sur son voisin. */
+.field-row > * { min-width: 0; }
+
+/* Safari impose sa propre mise en forme aux champs date et heure : on la
+   neutralise pour qu'ils se comportent comme les autres champs. */
+input[type='date'],
+input[type='time'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  min-height: 40px;
+  text-align: left;
+}
 
 .checkbox { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
 .checkbox input { width: auto; }
@@ -468,6 +482,30 @@ textarea { min-height: 64px; resize: vertical; }
   color: var(--text-soft);
 }
 .item .stripe { width: 4px; align-self: stretch; border-radius: 4px; flex: 0 0 auto; }
+
+/* Aperçu d'une note longue : trois lignes, puis « Voir plus ». */
+.note-preview {
+  margin-top: 6px;
+  font-size: 0.88rem;
+  color: var(--text-soft);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.note-preview.clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.note-more {
+  border: 0;
+  background: transparent;
+  padding: 4px 0 0;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+}
 
 .day-group { margin-bottom: 16px; }
 .day-head {
