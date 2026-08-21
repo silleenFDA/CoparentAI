@@ -17,6 +17,7 @@ import { Empty, Stat } from '../components/ui'
 import ExpenseForm from '../components/ExpenseForm'
 import TransferForm from '../components/TransferForm'
 import AllowanceForm, { ALLOWANCE_KINDS } from '../components/AllowanceForm'
+import ImportExpenses from '../components/ImportExpenses'
 
 const KIND_LABEL: Record<Transfer['kind'], string> = {
   remboursement: 'Remboursement',
@@ -36,6 +37,7 @@ export default function Finances() {
   const [editExpense, setEditExpense] = useState<Expense | null>(null)
   const [newTransfer, setNewTransfer] = useState(false)
   const [editTransfer, setEditTransfer] = useState<Transfer | null>(null)
+  const [importing, setImporting] = useState(false)
   const [newAllowance, setNewAllowance] = useState(false)
   const [editAllowance, setEditAllowance] = useState<Allowance | null>(null)
 
@@ -117,6 +119,9 @@ export default function Finances() {
           <div className="sub">Dépenses partagées et versements entre parents.</div>
         </div>
         <div className="row">
+          <button className="btn btn-sm" onClick={() => setImporting(true)}>
+            ⬆ Importer
+          </button>
           <button className="btn btn-sm" onClick={() => setNewAllowance(true)}>
             + Somme perçue
           </button>
@@ -529,6 +534,7 @@ export default function Finances() {
       {editExpense && (
         <ExpenseForm initial={editExpense} onClose={() => setEditExpense(null)} />
       )}
+      {importing && <ImportExpenses onClose={() => setImporting(false)} />}
       {newAllowance && <AllowanceForm onClose={() => setNewAllowance(false)} />}
       {editAllowance && (
         <AllowanceForm initial={editAllowance} onClose={() => setEditAllowance(null)} />

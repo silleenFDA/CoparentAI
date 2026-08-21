@@ -142,6 +142,38 @@ Le solde affiché sur l'accueil, c'est le résultat de tout cela mis bout à bou
 Un versement peut être marqué « hors solde » s'il ne doit pas entrer dans ce
 calcul.
 
+## Importer des dépenses depuis Excel
+
+**Finances → Importer.** Accepte un `.xlsx` ou un `.csv` comportant une ligne
+d'en-têtes et une dépense par ligne.
+
+Le `.xlsx` est préférable au CSV : un nombre y est un nombre, une date une date,
+et le texte est toujours en UTF-8. Un CSV exporté depuis Excel en français
+arrive avec des points-virgules, des virgules décimales et souvent un encodage
+Windows — tout cela est géré, mais le `.xlsx` évite d'y penser.
+
+L'import se fait en trois temps, sans jamais écrire à l'aveugle :
+
+1. **Correspondance des colonnes** — proposée d'après les en-têtes (« Payé par »,
+   « Part maman », « Libellé »…), et modifiable. Seules la date, le libellé et le
+   montant sont obligatoires ; les colonnes absentes prennent une valeur par
+   défaut que l'on choisit.
+2. **Aperçu** — les lignes prêtes d'un côté, les lignes refusées de l'autre avec
+   leur numéro et la raison du refus (« ligne 9 : date illisible »).
+3. **Import** — les catégories inconnues sont créées au passage.
+
+Les formats reconnus sans réglage : dates `01/02/2026`, `2026-02-01`, `1-2-26` ou
+numéro de série Excel ; montants `1 234,56 €`, `1234.56`, `(12,00)` ; parts
+`50 %` ou `0,5` ; « Payé par » accepte « Moi » ou le prénom du parent.
+
+Une ligne dont la date, le libellé et le montant existent déjà est signalée
+comme doublon et **écartée par défaut** — réimporter deux fois le même fichier
+n'ajoute donc rien, sauf demande explicite.
+
+Techniquement, un `.xlsx` est une archive compressée ; l'application la lit avec
+les moyens du navigateur, sans bibliothèque extérieure. Safari antérieur à 16.4
+ne sait pas le faire : le message invite alors à passer par le CSV.
+
 ## Les sommes perçues
 
 L'argent qui arrive de l'extérieur pour les enfants — allocation de rentrée,
